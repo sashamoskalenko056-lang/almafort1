@@ -412,6 +412,7 @@ const SKU_IMAGES: Record<string, string> = {
   "MK-LH": "/products/mk-lh.webp",
   "TG-080": "/products/tg.webp",
   "KREPSS-PRO": "/products/krepss-pro.webp",
+  "KAN-CAP-R": "/products/kan-cap-r.webp",
   "TG-100": "/products/tg.webp",
   "TG-150": "/products/tg.webp",
 };
