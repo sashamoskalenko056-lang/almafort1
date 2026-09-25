@@ -625,6 +625,30 @@ export type Database = {
         }
         Relationships: []
       }
+      vision_feedback: {
+        Row: {
+          created_at: string
+          features: string
+          id: string
+          predicted_sku: string | null
+          sku: string
+        }
+        Insert: {
+          created_at?: string
+          features?: string
+          id?: string
+          predicted_sku?: string | null
+          sku: string
+        }
+        Update: {
+          created_at?: string
+          features?: string
+          id?: string
+          predicted_sku?: string | null
+          sku?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

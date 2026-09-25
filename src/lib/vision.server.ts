@@ -130,10 +130,68 @@ export async function logVisionFail(imageDataUrl: string, verdict: VisionVerdict
   }
 }
 
-export async function identifyPart(imageDataUrl: string): Promise<VisionVerdict> {
+export type VisionMemoryItem = { sku: string; features: string };
+
+/**
+ * Память сканера: примеры, которые посетители подтвердили кнопкой «Да, это она».
+ * Сводим последние подтверждения в компактную шпаргалку «признаки → артикул»:
+ * модель видит, как реальные снимки уже соотносились с каталогом, и реже путает детали.
+ */
+async function confirmedExamples(): Promise<VisionMemoryItem[]> {
+  try {
+    const { db: store } = await import("@/lib/db.server");
+    const { data } = await store
+      .from("vision_feedback")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    const perSku = new Map<string, number>();
+    const out: VisionMemoryItem[] = [];
+    for (const r of (data ?? []) as { sku: string; features: string }[]) {
+      const n = perSku.get(r.sku) ?? 0;
+      if (n >= 3 || !r.features) continue; // не больше 3 примеров на артикул
+      perSku.set(r.sku, n + 1);
+      out.push({ sku: r.sku, features: r.features });
+      if (out.length >= 40) break;
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+export async function saveVisionFeedback(item: VisionMemoryItem & { predicted: string | null }) {
+  const { db: store } = await import("@/lib/db.server");
+  await store.from("vision_feedback").insert({
+    sku: item.sku,
+    predicted_sku: item.predicted,
+    features: item.features.slice(0, 200),
+    created_at: new Date().toISOString(),
+  });
+}
+
+function memoryBlock(title: string, items: VisionMemoryItem[]): string {
+  const valid = items.filter((i) => PRODUCTS.some((p) => p.sku === i.sku));
+  if (!valid.length) return "";
+  return `\n${title}\n` + valid.map((i) => `- «${i.features.slice(0, 140)}» → ${i.sku}`).join("\n");
+}
+
+export async function identifyPart(
+  imageDataUrl: string,
+  sessionMemory: VisionMemoryItem[] = [],
+): Promise<VisionVerdict> {
   const base = (await activePrompt("vision")) ?? SYSTEM_PROMPT;
   // Инъекция актуального каталога: {{CATALOG}} в кастомном промпте или дописываем в конец.
-  const catalog = catalogGrounding();
+  const catalog =
+    catalogGrounding() +
+    memoryBlock(
+      "## ПОДТВЕРЖДЁННЫЕ ПРИМЕРЫ (реальные фото, которые посетители подтвердили; используй как ориентир, но решай по текущему фото):",
+      await confirmedExamples(),
+    ) +
+    memoryBlock(
+      "## ФОТО ЭТОГО ПОСЕТИТЕЛЯ, УЖЕ ПОДТВЕРЖДЁННЫЕ В ЭТОЙ СЕССИИ:",
+      sessionMemory.slice(0, 8),
+    );
   const system = base.includes("{{CATALOG}}")
     ? base.replace("{{CATALOG}}", catalog)
     : `${base}\nОПИРАЙСЯ СТРОГО НА ЭТОТ КАТАЛОГ:\n${catalog}\nЕсли совпадения нет — верни status "NOT_FOUND".`;

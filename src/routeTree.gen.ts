@@ -54,6 +54,7 @@ import { Route as ApiPublicInventoryExpireRouteImport } from './routes/api/publi
 import { Route as ApiPublicSendMailRouteImport } from './routes/api/public/send-mail'
 import { Route as ApiQuizSubmitRouteImport } from './routes/api/quiz/submit'
 import { Route as ApiUploadPresignedUrlRouteImport } from './routes/api/upload/presigned-url'
+import { Route as ApiVisionFeedbackRouteImport } from './routes/api/vision/feedback'
 import { Route as ApiVisionIdentifyRouteImport } from './routes/api/vision/identify'
 import { Route as AuthenticatedAdminAlmaSecure2026OrdersOrderIdRouteImport } from './routes/_authenticated/admin-alma-secure-2026.orders.$orderId'
 import { Route as ApiPublicCadSplatRouteImport } from './routes/api/public/cad/$'
@@ -297,6 +298,11 @@ const ApiUploadPresignedUrlRoute = ApiUploadPresignedUrlRouteImport.update({
   path: '/api/upload/presigned-url',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVisionFeedbackRoute = ApiVisionFeedbackRouteImport.update({
+  id: '/api/vision/feedback',
+  path: '/api/vision/feedback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiVisionIdentifyRoute = ApiVisionIdentifyRouteImport.update({
   id: '/api/vision/identify',
   path: '/api/vision/identify',
@@ -379,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/api/public/send-mail': typeof ApiPublicSendMailRoute
   '/api/quiz/submit': typeof ApiQuizSubmitRoute
   '/api/upload/presigned-url': typeof ApiUploadPresignedUrlRoute
+  '/api/vision/feedback': typeof ApiVisionFeedbackRoute
   '/api/vision/identify': typeof ApiVisionIdentifyRoute
   '/admin-alma-secure-2026/': typeof AuthenticatedAdminAlmaSecure2026IndexRoute
   '/admin-alma-secure-2026/orders/$orderId': typeof AuthenticatedAdminAlmaSecure2026OrdersOrderIdRoute
@@ -430,6 +437,7 @@ export interface FileRoutesByTo {
   '/api/public/send-mail': typeof ApiPublicSendMailRoute
   '/api/quiz/submit': typeof ApiQuizSubmitRoute
   '/api/upload/presigned-url': typeof ApiUploadPresignedUrlRoute
+  '/api/vision/feedback': typeof ApiVisionFeedbackRoute
   '/api/vision/identify': typeof ApiVisionIdentifyRoute
   '/admin-alma-secure-2026': typeof AuthenticatedAdminAlmaSecure2026IndexRoute
   '/admin-alma-secure-2026/orders/$orderId': typeof AuthenticatedAdminAlmaSecure2026OrdersOrderIdRoute
@@ -485,6 +493,7 @@ export interface FileRoutesById {
   '/api/public/send-mail': typeof ApiPublicSendMailRoute
   '/api/quiz/submit': typeof ApiQuizSubmitRoute
   '/api/upload/presigned-url': typeof ApiUploadPresignedUrlRoute
+  '/api/vision/feedback': typeof ApiVisionFeedbackRoute
   '/api/vision/identify': typeof ApiVisionIdentifyRoute
   '/_authenticated/admin-alma-secure-2026/': typeof AuthenticatedAdminAlmaSecure2026IndexRoute
   '/_authenticated/admin-alma-secure-2026/orders/$orderId': typeof AuthenticatedAdminAlmaSecure2026OrdersOrderIdRoute
@@ -540,6 +549,7 @@ export interface FileRouteTypes {
     | '/api/public/send-mail'
     | '/api/quiz/submit'
     | '/api/upload/presigned-url'
+    | '/api/vision/feedback'
     | '/api/vision/identify'
     | '/admin-alma-secure-2026/'
     | '/admin-alma-secure-2026/orders/$orderId'
@@ -591,6 +601,7 @@ export interface FileRouteTypes {
     | '/api/public/send-mail'
     | '/api/quiz/submit'
     | '/api/upload/presigned-url'
+    | '/api/vision/feedback'
     | '/api/vision/identify'
     | '/admin-alma-secure-2026'
     | '/admin-alma-secure-2026/orders/$orderId'
@@ -645,6 +656,7 @@ export interface FileRouteTypes {
     | '/api/public/send-mail'
     | '/api/quiz/submit'
     | '/api/upload/presigned-url'
+    | '/api/vision/feedback'
     | '/api/vision/identify'
     | '/_authenticated/admin-alma-secure-2026/'
     | '/_authenticated/admin-alma-secure-2026/orders/$orderId'
@@ -689,6 +701,7 @@ export interface RootRouteChildren {
   ApiPublicSendMailRoute: typeof ApiPublicSendMailRoute
   ApiQuizSubmitRoute: typeof ApiQuizSubmitRoute
   ApiUploadPresignedUrlRoute: typeof ApiUploadPresignedUrlRoute
+  ApiVisionFeedbackRoute: typeof ApiVisionFeedbackRoute
   ApiVisionIdentifyRoute: typeof ApiVisionIdentifyRoute
   ApiPublicCadSplatRoute: typeof ApiPublicCadSplatRoute
   ApiPublicErpRetryRoute: typeof ApiPublicErpRetryRoute
@@ -1014,6 +1027,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUploadPresignedUrlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/vision/feedback': {
+      id: '/api/vision/feedback'
+      path: '/api/vision/feedback'
+      fullPath: '/api/vision/feedback'
+      preLoaderRoute: typeof ApiVisionFeedbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/vision/identify': {
       id: '/api/vision/identify'
       path: '/api/vision/identify'
@@ -1165,6 +1185,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicSendMailRoute: ApiPublicSendMailRoute,
   ApiQuizSubmitRoute: ApiQuizSubmitRoute,
   ApiUploadPresignedUrlRoute: ApiUploadPresignedUrlRoute,
+  ApiVisionFeedbackRoute: ApiVisionFeedbackRoute,
   ApiVisionIdentifyRoute: ApiVisionIdentifyRoute,
   ApiPublicCadSplatRoute: ApiPublicCadSplatRoute,
   ApiPublicErpRetryRoute: ApiPublicErpRetryRoute,
