@@ -314,7 +314,11 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
         const guessSku = (data.verdict as Verdict & { sku?: string | null }).sku;
         const guess = items.find((i) => i.sku === guessSku) ?? items[0] ?? null;
         const v = data.verdict as Verdict & { detected_features?: string };
-        const id = crypto.randomUUID();
+        // crypto.randomUUID есть только на HTTPS — на http:// (VPS по IP) он undefined.
+        const id =
+          typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
         void makeThumb(image)
           .then((thumb) => {
             updateMemory((l) => [
@@ -461,9 +465,21 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
   };
 
   const sizeVariants = useMemo(
-    () => (result?.scenario === "exact" ? result.variants : []),
+    () => {
+      if (result?.scenario !== "exact") return [];
+      // Размерный ряд — только того же изделия, что распознал ИИ, а не вся категория.
+      const guess = (result.verdict as Verdict & { sku?: string | null }).sku;
+      const base = result.variants.find((v) => v.sku === guess) ?? result.variants[0];
+      if (!base) return [];
+      const same = result.variants.filter((v) => v.name === base.name);
+      return same.length ? same : [base];
+    },
     [result],
   );
+
+  useEffect(() => {
+    if (sizeVariants.length === 1) setSize(sizeVariants[0]!.sku);
+  }, [sizeVariants]);
 
   if (!open) return null;
 
@@ -990,11 +1006,12 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
           {result.scenario === "exact" && (
             <>
               <h3 className="text-lg font-bold text-foreground">
-                Распознана: {result.category}
+                Распознана: {sizeVariants[0]?.name ?? result.category}
               </h3>
               <p className="mt-1 text-sm leading-[1.6] text-muted-foreground">
-                Уверенность {Math.round(result.verdict.confidence * 100)}%. Размер по фотографии не
-                определяется — выберите ваш размер профиля:
+                Уверенность {Math.round(result.verdict.confidence * 100)}%. {sizeVariants.length > 1
+                  ? "Размер по фото не определить — выберите нужный:"
+                  : "Проверьте артикул и добавьте в корзину."}
               </p>
               {/* Размерные чипы: клик — и клиент сразу в конкретном артикуле */}
               <div className="mt-4 flex flex-wrap gap-2">
