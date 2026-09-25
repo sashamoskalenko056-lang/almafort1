@@ -457,11 +457,27 @@ export const useCart = create<State>()(
       // базовый цвет артикула — в спецификации не остаётся «бесцветных» позиций.
       onRehydrateStorage: () => (state) => {
         if (!state?.lines?.length) return;
-        state.lines = state.lines.map((l) => {
-          if (l.color?.label) return l;
-          const p = productBySku(l.sku);
-          return p ? { ...l, color: resolveLineColor(p) } : l;
-        });
+        // Переименованные артикулы: старые коды из сохранённых корзин.
+        const RENAMED: Record<string, string> = {
+          "ZGV-20x40": "ZGV-40x20",
+          "ZGV-40x60": "ZGV-60x40",
+        };
+        const merged = new Map<string, (typeof state.lines)[number]>();
+        for (const raw of state.lines) {
+          const newSku = RENAMED[raw.sku];
+          let l = raw;
+          if (newSku) {
+            const p = productBySku(newSku);
+            l = { ...raw, sku: newSku, name: p?.name ?? raw.name, color: p ? resolveLineColor(p) : raw.color };
+          }
+          if (!l.color?.label) {
+            const p = productBySku(l.sku);
+            if (p) l = { ...l, color: resolveLineColor(p) };
+          }
+          const prev = merged.get(l.sku);
+          merged.set(l.sku, prev ? { ...prev, quantity: prev.quantity + l.quantity } : l);
+        }
+        state.lines = [...merged.values()];
       },
     },
 
