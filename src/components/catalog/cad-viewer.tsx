@@ -148,11 +148,11 @@ function GltfModel({
     // артикула: у КРЕПСС +Z направлен к шляпке, поэтому нужен -90° по X.
     s.rotation.set(...rotation);
     s.updateMatrixWorld(true);
-    // Fit to screen: нормализуем по наибольшей оси (60 мм у 40×60) и
+    // Fit to screen: нормализуем по наибольшей оси (60 мм у 60×40) и
     // переносим центр Bounding Box в начало координат — вращение без «восьмёрки».
     const box = new THREE.Box3().setFromObject(s);
     const size = box.getSize(new THREE.Vector3());
-    // mmScale: единый масштаб 1 мм = 0.025 ед. (GLB хранится ×0.05) — 40×60 и 25×25
+    // mmScale: единый масштаб 1 мм = 0.025 ед. (GLB хранится ×0.05) — 60×40 и 25×25
     // соотносятся по реальным габаритам; иначе — fit по наибольшей оси.
     const k = mmScale ? 0.5 : 1.5 / Math.max(size.x, size.y, size.z, 1e-6);
     const c = box.getCenter(new THREE.Vector3());
