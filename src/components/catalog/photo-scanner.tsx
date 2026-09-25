@@ -15,6 +15,7 @@ import { useSwipeClose } from "@/lib/use-swipe-close";
 import { toast } from "sonner";
 import { useCart } from "@/store/cart-store";
 import { formatPrice } from "@/lib/pricing";
+import { PRODUCTS } from "@/data/catalog";
 import { QuoteRequestModal } from "@/components/catalog/quote-request-modal";
 import { loadScanMemory, saveScanMemory, makeThumb, memoryForPrompt, type ScanMemoryEntry } from "@/lib/scan-memory";
 import { compress, decodeImageFile, frameStats, lowLightHint } from "@/lib/image-prep";
@@ -464,22 +465,28 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
     void start();
   };
 
-  const sizeVariants = useMemo(
-    () => {
-      if (result?.scenario !== "exact") return [];
-      // Размерный ряд — только того же изделия, что распознал ИИ, а не вся категория.
-      const guess = (result.verdict as Verdict & { sku?: string | null }).sku;
-      const base = result.variants.find((v) => v.sku === guess) ?? result.variants[0];
-      if (!base) return [];
-      const same = result.variants.filter((v) => v.name === base.name);
-      return same.length ? same : [base];
-    },
-    [result],
-  );
-
+  /** Совпадения, сгруппированные по названию комплектующего (не по размерам). */
+  const matchGroups = useMemo(() => {
+    if (result?.scenario !== "exact") return [];
+    const conf = Math.round(result.verdict.confidence * 100);
+    const guess = (result.verdict as Verdict & { sku?: string | null }).sku;
+    const map = new Map<string, Item[]>();
+    for (const v of result.variants) map.set(v.name, [...(map.get(v.name) ?? []), v]);
+    const groups = [...map.entries()].map(([name, items]) => ({
+      name,
+      items,
+      image: PRODUCTS.find((p) => items.some((x) => x.sku === p.sku) && p.image_url)?.image_url ?? null,
+      top: items.some((x) => x.sku === guess),
+    }));
+    groups.sort((x, y) => Number(y.top) - Number(x.top));
+    return groups.slice(0, 4).map((g, i) => ({ ...g, score: Math.max(20, conf - i * 17) }));
+  }, [result]);
+  const [activeName, setActiveName] = useState("");
   useEffect(() => {
-    if (sizeVariants.length === 1) setSize(sizeVariants[0]!.sku);
-  }, [sizeVariants]);
+    const first = matchGroups[0];
+    setActiveName(first?.name ?? "");
+    setSize(first && first.items.length === 1 ? first.items[0]!.sku : "");
+  }, [matchGroups]);
 
   if (!open) return null;
 
@@ -966,7 +973,9 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
                 <img src={entry.thumb} alt="" className="size-14 shrink-0 rounded-md object-cover" />
                 <div className="min-w-0 flex-1 text-sm">
                   <p className="font-medium text-foreground">
-                    {entry.sku
+                    {result.scenario === "notfound"
+                      ? "Узнали деталь? Нажмите нужный артикул — сканер запомнит это фото."
+                      : entry.sku
                       ? `Похоже на ${entry.name} (${entry.sku}). Запомнить это фото для этой позиции?`
                       : "Не уверен, что это за деталь. Выберите позицию, и я запомню фото."}
                   </p>
@@ -1005,45 +1014,70 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
 
           {result.scenario === "exact" && (
             <>
-              <h3 className="text-lg font-bold text-foreground">
-                Распознана: {sizeVariants[0]?.name ?? result.category}
-              </h3>
-              <p className="mt-1 text-sm leading-[1.6] text-muted-foreground">
-                Уверенность {Math.round(result.verdict.confidence * 100)}%. {sizeVariants.length > 1
-                  ? "Размер по фото не определить — выберите нужный:"
-                  : "Проверьте артикул и добавьте в корзину."}
+              <h3 className="text-lg font-bold text-foreground">Похоже на эти комплектующие</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Нажмите на подходящее — размер выберете следом.
               </p>
-              {/* Размерные чипы: клик — и клиент сразу в конкретном артикуле */}
-              <div className="mt-4 flex flex-wrap gap-2">
-                {sizeVariants.map((v) => (
-                  <button
-                    key={v.sku}
-                    type="button"
-                    onClick={() => setSize(v.sku)}
-                    aria-pressed={size === v.sku}
-                    className={`min-h-[44px] cursor-pointer rounded-full border px-4 text-sm font-semibold transition-colors ${
-                      size === v.sku
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border text-foreground hover:border-primary hover:text-primary"
-                    }`}
-                  >
-                    {v.dims || v.sku}
-                  </button>
-                ))}
-                {sizeVariants.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Размерный ряд не найден — отправьте фото менеджеру, подберём вручную.
-                  </p>
+              {/* Совпадения по названию: фото + название крупно + процент */}
+              <ul className="mt-4 space-y-2">
+                {matchGroups.map((g, i) => {
+                  const active = g.name === activeName;
+                  return (
+                    <li key={g.name}>
+                      <button
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => {
+                          setActiveName(g.name);
+                          setSize(g.items.length === 1 ? g.items[0]!.sku : "");
+                        }}
+                        className={`flex w-full cursor-pointer items-center gap-3 rounded-xl border p-2.5 text-left transition-all active:scale-[0.99] ${
+                          active ? "border-primary bg-primary/5 shadow-sm" : "border-border hover:border-foreground/40"
+                        }`}
+                      >
+                        <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-white">
+                          {g.image ? (
+                            <img src={g.image} alt="" loading="lazy" className="h-full w-full object-contain p-1" />
+                          ) : (
+                            <span className="text-xs font-semibold text-muted-foreground">{g.items[0]!.sku.slice(0, 3)}</span>
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-base font-bold leading-tight text-foreground">{g.name}</span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {g.items.length > 1 ? `${g.items.length} размера · от ${formatPrice(Math.min(...g.items.map((x) => x.price)))}` : `${g.items[0]!.sku} · ${formatPrice(g.items[0]!.price)}`}
+                          </span>
+                        </span>
+                        <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-bold tabular-nums ${active ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                          {g.score}%
+                        </span>
+                      </button>
+                      {active && g.items.length > 1 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5 pl-1">
+                          {g.items.map((v) => (
+                            <button
+                              key={v.sku}
+                              type="button"
+                              onClick={() => setSize(v.sku)}
+                              aria-pressed={size === v.sku}
+                              className={`min-h-[40px] cursor-pointer rounded-full border px-3 text-xs font-medium transition-colors ${
+                                size === v.sku ? "border-primary bg-primary text-primary-foreground" : "border-border text-foreground hover:border-primary"
+                              }`}
+                            >
+                              {v.dims || v.sku}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+                {matchGroups.length === 0 && (
+                  <li className="text-sm text-muted-foreground">
+                    Совпадений не найдено — отправьте фото менеджеру, подберём вручную.
+                  </li>
                 )}
-              </div>
-              {size && (
-                <p className="mt-3 text-sm text-muted-foreground">
-                  {sizeVariants.find((v) => v.sku === size)?.name} ({size}) ·{" "}
-                  <b className="text-foreground">
-                    {formatPrice(sizeVariants.find((v) => v.sku === size)?.price ?? 0)}
-                  </b>
-                </p>
-              )}
+              </ul>
               <button
                 type="button"
                 disabled={!size}
@@ -1052,9 +1086,9 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
                   toast.success(`${size} добавлен в корзину`);
                   onClose();
                 }}
-                className="mt-4 min-h-[44px] w-full cursor-pointer rounded-sm bg-primary py-3.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                className="mt-4 min-h-[48px] w-full cursor-pointer rounded-lg bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
               >
-                В корзину
+                {size ? `В корзину · ${formatPrice(result.variants.find((v) => v.sku === size)?.price ?? 0)}` : "Выберите комплектующее и размер"}
               </button>
             </>
           )}
@@ -1184,11 +1218,12 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
           {result.scenario === "notfound" && (
             <div className="rounded-md border border-zinc-300 bg-zinc-50 p-5">
               <h3 className="text-base font-bold leading-[1.35] text-zinc-800">
-                Деталь не распознана
+                {result.matches.length > 0 ? "Похоже на эти комплектующие" : "Деталь не распознана"}
               </h3>
               <p className="mt-2 text-sm leading-[1.6] text-zinc-600">
-                Сфотографируйте деталь на контрастном фоне при хорошем освещении, либо выберите
-                товар вручную из каталога.
+                {result.matches.length > 0
+                  ? "Точно определить не получилось — выберите подходящее из списка или переснимите деталь крупнее."
+                  : "Сфотографируйте деталь на контрастном фоне при хорошем освещении, либо выберите товар вручную из каталога."}
               </p>
               {result.matches.length > 0 && (
                 <>
@@ -1199,10 +1234,17 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
                     {result.matches.map((m) => (
                       <li
                         key={m.sku}
-                        className="flex items-center gap-3 rounded-md border border-zinc-200 bg-white p-3"
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card p-2.5"
                       >
+                        <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-white">
+                          {PRODUCTS.find((p) => p.sku === m.sku)?.image_url ? (
+                            <img src={PRODUCTS.find((p) => p.sku === m.sku)!.image_url!} alt="" loading="lazy" className="h-full w-full object-contain p-1" />
+                          ) : (
+                            <span className="text-[10px] font-semibold text-muted-foreground">{m.sku.slice(0, 3)}</span>
+                          )}
+                        </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-foreground">
+                          <span className="block text-base font-bold leading-tight text-foreground">
                             {m.name}
                           </span>
                           <span className="block text-xs text-muted-foreground">
