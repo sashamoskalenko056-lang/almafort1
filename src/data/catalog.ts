@@ -430,6 +430,9 @@ const SKU_IMAGES: Record<string, string> = {
   "ZGV-40x60": "/products/zgv-rect.webp",
   "OP-PM-20": "/products/op-pm-cover.webp",
   "OP-PM-25": "/products/op-pm-cover.webp",
+  "ZGV-D20": "/products/zgv-d-round.webp",
+  "ZGV-D22": "/products/zgv-d-round.webp",
+  "ZGV-D25": "/products/zgv-d-round.webp",
 };
 
 /** Галерея фото артикула: первое — обложка (совпадает с SKU_IMAGES). */
