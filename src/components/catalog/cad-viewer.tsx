@@ -460,9 +460,9 @@ export function CadViewer({
         try {
           const ctx = gl.getContext?.();
           if (ctx && ctx.isContextLost()) return;
+          // forceContextLoss не вызываем: Canvas сам освобождает контекст при
+          // размонтировании, повторный вызов даёт "context already lost".
           gl.renderLists?.dispose();
-          gl.dispose();
-          gl.forceContextLoss?.();
         } catch {
           /* контекст уже освобождён браузером */
         }
