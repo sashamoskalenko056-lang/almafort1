@@ -734,6 +734,34 @@ export function ProductSheet({
                     <CadViewerPlaceholder />
                   )}
                 </ClientOnly>
+                )}
+                {galleryImages.length > 0 && (
+                  <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                    <button
+                      type="button"
+                      onClick={() => setMediaView("3d")}
+                      aria-label="3D-модель"
+                      className={`grid size-14 shrink-0 place-items-center rounded-md border bg-card font-mono text-[11px] font-semibold transition-colors ${
+                        mediaView === "3d" ? "border-primary text-primary" : "border-border text-muted-foreground hover:border-primary"
+                      }`}
+                    >
+                      3D
+                    </button>
+                    {galleryImages.map((img, i) => (
+                      <button
+                        key={img.full_url}
+                        type="button"
+                        onClick={() => setMediaView(i)}
+                        aria-label={`Фото ${i + 1}`}
+                        className={`size-14 shrink-0 overflow-hidden rounded-md border bg-card p-0.5 transition-colors ${
+                          mediaView === i ? "border-primary" : "border-border hover:border-primary"
+                        }`}
+                      >
+                        <img src={img.thumb_url} alt="" loading="lazy" className="size-full rounded-[4px] object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <div className="mt-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
