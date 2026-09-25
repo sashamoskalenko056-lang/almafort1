@@ -87,7 +87,7 @@ const SYSTEM_PROMPT =
   NEGATIVE_PROMPT +
   "\nПравила:\n" +
   "1. Сначала кратко (до 120 символов) опиши форму в detected_features, затем сопоставь с каталогом.\n" +
-  "2. Нет совпадения — found=false, sku=null, status NOT_FOUND, confidence 60 (режим аналогов).\n" +
+  "2. Если семейство есть в каталоге, но размер не виден, found=true и укажи любой артикул ТОГО ЖЕ семейства; размер выберет человек. Нет совпадения по конструкции — found=false, sku=null, status NOT_FOUND.\n" +
   "3. Только рука/лицо/животное/еда/пустой или смазанный кадр — status INVALID.\n" +
   "4. FOREIGN — только люди, документы или явно посторонние предметы. Белый/серый студийный фон — норма.\n" +
   "5. Несколько РАЗНЫХ деталей в кадре — multiple_objects_detected=true, status NOT_FOUND.\n" +
@@ -324,13 +324,20 @@ export function matchProducts(v: VisionVerdict, limit = 3): Product[] {
   const round = /кругл|round|circle/.test(v.shape);
   const rect = /прямоуг|rect/.test(v.shape);
 
-  return PRODUCTS.filter((p) => !shapeConflict(p, { square, round }))
+  return PRODUCTS.filter((p) => !p.is_service && !shapeConflict(p, { square, round }))
     .map((p) => {
       let score = 0;
       if (category && p.category === category) score += 10;
       if (square && /квадратн/i.test(p.name)) score += 5;
       if (round && /кругл|Ø/i.test(`${p.name} ${p.dims}`)) score += 5;
       if (rect && /прямоугольн/i.test(p.name)) score += 5;
+      if (v.sku === p.sku) score += 30;
+      const observed = `${v.type} ${v.observed} ${v.detected_features} ${v.markers.join(" ")}`.toLowerCase();
+      const featureTokens = p.visualFeatures
+        .toLowerCase()
+        .split(/[^a-zа-яё0-9]+/i)
+        .filter((token) => token.length >= 5);
+      score += Math.min(8, featureTokens.filter((token) => observed.includes(token)).length * 2);
       // Резьба на детали сужает выбор до резьбовых групп каталога.
       if (v.has_threads && /Мебельный крепеж|сэндвич-панелей/.test(p.category)) score += 4;
       if (!v.has_threads && /Заглушки/.test(p.category)) score -= 2;
@@ -361,7 +368,10 @@ export function classVariants(v: VisionVerdict, limit = 24): Product[] {
   if (!category) return [];
   const square = /квадрат|square/.test(v.shape);
   const round = /кругл|round|circle/.test(v.shape);
+  const exact = v.sku ? PRODUCTS.find((p) => p.sku === v.sku && !p.is_service) : undefined;
+  const familyName = exact?.name;
   return PRODUCTS.filter((p) => p.category === category && !p.is_service)
+    .filter((p) => !familyName || p.name === familyName)
     .filter((p) => !shapeConflict(p, { square, round }))
     .sort((a, b) => b.stock.qty - a.stock.qty)
     .slice(0, limit);
