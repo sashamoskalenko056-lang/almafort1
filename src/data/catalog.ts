@@ -399,6 +399,8 @@ const SKU_IMAGES: Record<string, string> = {
   "MK-SHD": "/products/mk-shd.webp",
   "MK-UG": "/products/mk-ug.webp",
   "STK-POL-01": "/products/stk-pol-01.webp",
+  "MK-SD": "/products/mk-sd.webp",
+  "MK-LD": "/products/mk-ld.webp",
   "ZGD-SM": "/products/zgd-sm.webp",
   "ZGD-EV": "/products/zgd-ev.webp",
   "ZGD-EX": "/products/zgd-ex.webp",
