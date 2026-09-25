@@ -396,6 +396,9 @@ const SKU_GLB: Record<string, string> = {
 
 const SKU_IMAGES: Record<string, string> = {
   "KR-50": "/products/kr-50.jpg",
+  "SRV-INJ": "/products/srv-inj.webp",
+  "SRV-RE3D": "/products/srv-re3d.webp",
+  "SRV-FDM": "/products/srv-fdm.webp",
   "MK-SHD": "/products/mk-shd.webp",
   "MK-UG": "/products/mk-ug.webp",
   "STK-POL-01": "/products/stk-pol-01.webp",
