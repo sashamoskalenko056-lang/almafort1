@@ -1067,7 +1067,6 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
                           ))}
                         </div>
                       )}
-                      {i === 0 && matchGroups.length === 0 && null}
                     </li>
                   );
                 })}
