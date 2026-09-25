@@ -40,6 +40,46 @@ const STAMP_BASE64 =
     ),
   );
 
+/**
+ * Миниатюры для счёта: pdfmake не понимает WebP, поэтому перерисовываем фото
+ * в 96×96 JPEG на белом фоне. Нет фото или ошибка загрузки — ячейка с прочерком.
+ */
+async function loadInvoiceThumbs(skus: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (typeof document === "undefined") return out;
+  let groups = new Map<string, { images: { thumb_url: string }[] }>();
+  try {
+    const { fetchAssetGroups } = await import("@/lib/asset-groups");
+    groups = await fetchAssetGroups();
+  } catch {
+    /* без фото счёт всё равно формируется */
+  }
+  await Promise.all(
+    skus.map(async (sku) => {
+      const src = groups.get(sku)?.images[0]?.thumb_url ?? productBySku(sku)?.image_url;
+      if (!src) return;
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = src;
+        await Promise.race([img.decode(), new Promise((_, r) => setTimeout(r, 4000))]);
+        const c = document.createElement("canvas");
+        c.width = c.height = 96;
+        const ctx = c.getContext("2d")!;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, 96, 96);
+        const k = Math.min(96 / img.naturalWidth, 96 / img.naturalHeight);
+        const w = img.naturalWidth * k, h = img.naturalHeight * k;
+        ctx.drawImage(img, (96 - w) / 2, (96 - h) / 2, w, h);
+        out.set(sku, c.toDataURL("image/jpeg", 0.85));
+      } catch {
+        /* пропускаем */
+      }
+    }),
+  );
+  return out;
+}
+
 export type InvoiceInput = {
   lines: CartLine[];
   carrier: Carrier;
@@ -99,6 +139,7 @@ async function generateInvoicePdfImpl({
   const body: unknown[][] = [
     [
       { text: "№", style: "th" },
+      { text: "Фото", style: "th" },
       { text: "Артикул", style: "th" },
       { text: "Наименование", style: "th" },
       { text: "Кол-во", style: "th", alignment: "right" },
@@ -114,6 +155,7 @@ async function generateInvoicePdfImpl({
       a.sku.localeCompare(b.sku, "ru") || (a.color?.label ?? "").localeCompare(b.color?.label ?? "", "ru"),
   );
 
+  const thumbs = await loadInvoiceThumbs([...new Set(sorted.map((l) => l.sku))]);
   sorted.forEach((l, i) => {
     const { unit, sum } = linePrice(l.sku, l.quantity);
     const title = safeText(
@@ -122,8 +164,10 @@ async function generateInvoicePdfImpl({
     );
     const hex = l.color?.hex ?? "";
     const swatchOk = /^#[0-9a-f]{6}$/i.test(hex);
+    const thumb = thumbs.get(l.sku);
     body.push([
       { text: String(i + 1) },
+      thumb ? { image: thumb, width: 28, height: 28 } : { text: "—", color: "#9CA3AF", alignment: "center" },
       { text: safeText(l.sku, 40) },
       swatchOk
         ? {
@@ -148,6 +192,7 @@ async function generateInvoicePdfImpl({
   if (delivery > 0) {
     body.push([
       { text: String(lines.length + 1) },
+      { text: "" },
       { text: "DELIVERY" },
       { text: safeText(`Доставка: ${CARRIER_LABEL[carrier]}${city ? `, ${city}` : ""}`) },
       { text: "1", alignment: "right" },
@@ -199,7 +244,7 @@ async function generateInvoicePdfImpl({
         margin: [0, 14, 0, 12],
       },
       {
-        table: { headerRows: 1, dontBreakRows: true, keepWithHeaderRows: 1, widths: [18, 70, "*", 45, 55, 60], body },
+        table: { headerRows: 1, dontBreakRows: true, keepWithHeaderRows: 1, widths: [18, 34, 64, "*", 45, 55, 60], body },
         layout: {
           hLineWidth: () => 0.6,
           vLineWidth: () => 0.6,

@@ -407,6 +407,15 @@ export function ProductSheet({
   const [calcState, setCalcState] = useState<"idle" | "loading" | "ready" | "failed">("idle");
   const assets = useAssetGroups();
   const assetGroup = product ? assets.get(product.sku) : undefined;
+  // Галерея: фото из пакета контента, иначе одиночное image_url товара.
+  const galleryImages =
+    assetGroup?.images.length
+      ? assetGroup.images
+      : product?.image_url
+        ? [{ thumb_url: product.image_url, full_url: product.image_url }]
+        : [];
+  const [mediaView, setMediaView] = useState<"3d" | number>("3d");
+  useEffect(() => setMediaView("3d"), [product?.sku]);
   const service = product ? SERVICE_PROFILES[product.sku] : undefined;
 
   const profile = product
@@ -669,6 +678,37 @@ export function ProductSheet({
                     </p>
                   </div>
                 )}
+                {galleryImages.length > 0 && (
+                  <div role="tablist" aria-label="Режим просмотра" className="mb-3 inline-flex rounded-sm border border-border p-0.5">
+                    {(["3d", "photo"] as const).map((m) => {
+                      const active = m === "3d" ? mediaView === "3d" : mediaView !== "3d";
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          role="tab"
+                          aria-selected={active}
+                          onClick={() => setMediaView(m === "3d" ? "3d" : 0)}
+                          className={`rounded-[3px] px-3 py-1 text-xs font-medium transition-colors ${
+                            active ? "bg-primary text-primary-foreground" : "text-foreground hover:text-primary"
+                          }`}
+                        >
+                          {m === "3d" ? "3D-модель" : `Фото · ${galleryImages.length}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+                {mediaView !== "3d" && galleryImages[mediaView] ? (
+                  <div className="grid h-64 place-items-center overflow-hidden rounded-lg border border-border bg-card shadow-sm sm:h-72 lg:h-[380px]">
+                    <img
+                      key={galleryImages[mediaView]!.full_url}
+                      src={galleryImages[mediaView]!.full_url}
+                      alt={galleryImages[mediaView]!.caption ?? product.name}
+                      className="h-full w-full animate-in fade-in object-contain p-3"
+                    />
+                  </div>
+                ) : (
                 <ClientOnly fallback={<CadViewerPlaceholder />}>
                   {CadViewer ? (
                     <CadViewer
@@ -694,6 +734,34 @@ export function ProductSheet({
                     <CadViewerPlaceholder />
                   )}
                 </ClientOnly>
+                )}
+                {galleryImages.length > 0 && (
+                  <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                    <button
+                      type="button"
+                      onClick={() => setMediaView("3d")}
+                      aria-label="3D-модель"
+                      className={`grid size-14 shrink-0 place-items-center rounded-md border bg-card font-mono text-[11px] font-semibold transition-colors ${
+                        mediaView === "3d" ? "border-primary text-primary" : "border-border text-muted-foreground hover:border-primary"
+                      }`}
+                    >
+                      3D
+                    </button>
+                    {galleryImages.map((img, i) => (
+                      <button
+                        key={img.full_url}
+                        type="button"
+                        onClick={() => setMediaView(i)}
+                        aria-label={`Фото ${i + 1}`}
+                        className={`size-14 shrink-0 overflow-hidden rounded-md border bg-card p-0.5 transition-colors ${
+                          mediaView === i ? "border-primary" : "border-border hover:border-primary"
+                        }`}
+                      >
+                        <img src={img.thumb_url} alt="" loading="lazy" className="size-full rounded-[4px] object-contain" />
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <div className="mt-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
