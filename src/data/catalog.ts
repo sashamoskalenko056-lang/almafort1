@@ -396,6 +396,7 @@ const SKU_GLB: Record<string, string> = {
 
 const SKU_IMAGES: Record<string, string> = {
   "KR-50": "/products/kr-50.jpg",
+  "MK-SHD": "/products/mk-shd.webp",
 };
 
 export const PRODUCTS: Product[] = raw.map(
