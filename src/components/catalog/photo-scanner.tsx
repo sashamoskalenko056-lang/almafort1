@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useCart } from "@/store/cart-store";
 import { formatPrice } from "@/lib/pricing";
 import { QuoteRequestModal } from "@/components/catalog/quote-request-modal";
+import { loadScanMemory, saveScanMemory, makeThumb, memoryForPrompt, type ScanMemoryEntry } from "@/lib/scan-memory";
 import { compress, decodeImageFile, frameStats, lowLightHint } from "@/lib/image-prep";
 
 type Item = {
@@ -76,6 +77,31 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
   const streamRef = useRef<MediaStream | null>(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
+  // Память сканера: последние снимки посетителя и подтверждённые артикулы.
+  const [memory, setMemory] = useState<ScanMemoryEntry[]>([]);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  useEffect(() => {
+    if (open) setMemory(loadScanMemory());
+  }, [open]);
+  const updateMemory = (fn: (l: ScanMemoryEntry[]) => ScanMemoryEntry[]) =>
+    setMemory((prev) => {
+      const next = fn(prev);
+      saveScanMemory(next);
+      return next;
+    });
+  const confirmMemory = (id: string, sku: string, name: string) => {
+    const entry = memory.find((e) => e.id === id);
+    updateMemory((l) => l.map((e) => (e.id === id ? { ...e, sku, name, confirmed: true } : e)));
+    setPendingId(null);
+    toast.success(`Запомнил: фото привязано к ${name} (${sku})`);
+    if (entry?.features && entry.features.length >= 3) {
+      void fetch("/api/vision/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sku, predicted: entry.sku, features: entry.features }),
+      }).catch(() => {});
+    }
+  };
   const [camError, setCamError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -260,7 +286,7 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
       const res = await fetch("/api/vision/identify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image }),
+        body: JSON.stringify({ image, memory: memoryForPrompt(memory) }),
         signal: ctrl.signal,
       });
       const text = await res.text();
@@ -277,6 +303,36 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
       if (!json) throw new Error("Сервер вернул некорректный ответ");
       const data = json as unknown as Result;
       setResult(data);
+      // Кладём снимок в память с предложенным артикулом — подтвердит посетитель.
+      if (data.scenario !== "invalid" && data.scenario !== "lowlight" && data.scenario !== "foreign") {
+        const items =
+          data.scenario === "exact"
+            ? data.variants
+            : data.scenario === "clarify"
+              ? data.groups.flatMap((g) => g.items)
+              : data.matches;
+        const guessSku = (data.verdict as Verdict & { sku?: string | null }).sku;
+        const guess = items.find((i) => i.sku === guessSku) ?? items[0] ?? null;
+        const v = data.verdict as Verdict & { detected_features?: string };
+        const id = crypto.randomUUID();
+        void makeThumb(image)
+          .then((thumb) => {
+            updateMemory((l) => [
+              {
+                id,
+                thumb,
+                sku: guess?.sku ?? null,
+                name: guess?.name ?? null,
+                features: (v.detected_features || v.observed || "").slice(0, 200),
+                confirmed: false,
+                at: Date.now(),
+              },
+              ...l,
+            ]);
+            setPendingId(id);
+          })
+          .catch(() => {});
+      }
       if (data.verdict?.multiple_objects_detected) {
         toast(
           "В кадре слишком много объектов. Пожалуйста, оставьте только одну деталь для точного распознавания.",
@@ -592,6 +648,36 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
               >
                 У меня есть веб-камера — включить съёмку
               </button>
+              {memory.length > 0 && (
+                <div className="mt-8 border-t border-white/15 pt-5 text-left">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
+                      Ваши фото · {memory.filter((e) => e.confirmed).length} подтверждено
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => updateMemory(() => [])}
+                      className="text-xs text-white/55 underline underline-offset-4 hover:text-white"
+                    >
+                      Очистить
+                    </button>
+                  </div>
+                  <ul className="mt-3 flex gap-2 overflow-x-auto pb-1">
+                    {memory.map((e) => (
+                      <li key={e.id} className="w-20 shrink-0 text-center">
+                        <img
+                          src={e.thumb}
+                          alt={e.name ?? "Фото детали"}
+                          className={`size-20 rounded-md object-cover ${e.confirmed ? "ring-2 ring-primary" : "opacity-70"}`}
+                        />
+                        <p className="mt-1 truncate font-mono text-[10px] text-white/70">
+                          {e.confirmed ? e.sku : "не подтверждено"}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -846,6 +932,60 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
           }}
         >
           <div className="sheet-grabber -mt-3 mb-1" aria-hidden {...swipe.handleProps} />
+
+          {(() => {
+            const entry = memory.find((e) => e.id === pendingId);
+            if (!entry) return null;
+            const items =
+              result.scenario === "exact"
+                ? result.variants
+                : result.scenario === "clarify"
+                  ? result.groups.flatMap((g) => g.items)
+                  : "matches" in result
+                    ? result.matches
+                    : [];
+            const others = items.filter((i) => i.sku !== entry.sku).slice(0, 3);
+            return (
+              <div className="mb-4 flex gap-3 rounded-lg border border-border bg-muted/50 p-3">
+                <img src={entry.thumb} alt="" className="size-14 shrink-0 rounded-md object-cover" />
+                <div className="min-w-0 flex-1 text-sm">
+                  <p className="font-medium text-foreground">
+                    {entry.sku
+                      ? `Похоже на ${entry.name} (${entry.sku}). Запомнить это фото для этой позиции?`
+                      : "Не уверен, что это за деталь. Выберите позицию, и я запомню фото."}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {entry.sku && (
+                      <button
+                        type="button"
+                        onClick={() => confirmMemory(entry.id, entry.sku!, entry.name ?? entry.sku!)}
+                        className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                      >
+                        Да, запомнить
+                      </button>
+                    )}
+                    {others.map((o) => (
+                      <button
+                        key={o.sku}
+                        type="button"
+                        onClick={() => confirmMemory(entry.id, o.sku, o.name)}
+                        className="rounded-sm border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary"
+                      >
+                        Это {o.sku}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setPendingId(null)}
+                      className="px-2 py-1.5 text-xs text-muted-foreground underline underline-offset-2"
+                    >
+                      Не запоминать
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {result.scenario === "exact" && (
             <>
