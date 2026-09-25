@@ -738,15 +738,15 @@ export function ProductSheet({
                   </div>
                   {galleryImages.length > 0 && (
                     <div
-                      className={`absolute inset-0 grid place-items-center transition-all duration-300 ease-out ${
-                        mediaView !== "3d" ? "scale-100 opacity-100" : "pointer-events-none scale-[0.98] opacity-0"
+                      className={`absolute inset-0 bg-white transition-opacity duration-300 ease-out ${
+                        mediaView !== "3d" ? "opacity-100" : "pointer-events-none opacity-0"
                       }`}
                     >
                       <img
-                        key={galleryImages[mediaView === "3d" ? 0 : mediaView]?.full_url}
                         src={galleryImages[mediaView === "3d" ? 0 : mediaView]?.full_url}
                         alt={galleryImages[mediaView === "3d" ? 0 : mediaView]?.caption ?? product.name}
-                        className="h-full w-full object-contain p-3"
+                        decoding="async"
+                        className="absolute inset-0 m-auto box-border block h-full w-full max-w-full object-contain object-center p-4 sm:p-6"
                       />
                     </div>
                   )}
@@ -773,7 +773,7 @@ export function ProductSheet({
                           mediaView === i ? "border-primary shadow-sm" : "border-border hover:border-primary"
                         }`}
                       >
-                        <img src={img.thumb_url} alt="" loading="lazy" className="size-full rounded-[4px] object-contain" />
+                        <img src={img.thumb_url} alt="" loading="lazy" className="block size-full rounded-[4px] bg-white object-contain object-center" />
                       </button>
                     ))}
                   </div>

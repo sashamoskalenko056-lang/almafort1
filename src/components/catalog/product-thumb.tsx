@@ -14,14 +14,14 @@ export function ProductThumb({
 }) {
   return (
     <span
-      className={`group grid aspect-square w-full place-items-center overflow-hidden rounded-[6px] bg-muted shadow-sm ${className}`}
+      className={`group relative grid aspect-square w-full place-items-center overflow-hidden rounded-[6px] shadow-sm ${src ? "bg-white" : "bg-muted"} ${className}`}
     >
       {src ? (
         <SafeImage
           src={src}
           alt={alt}
           loading="lazy"
-          className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-110"
+          className="absolute inset-0 block h-full w-full object-contain object-center transition-transform duration-300 group-hover:scale-110"
         />
       ) : (
         <svg
