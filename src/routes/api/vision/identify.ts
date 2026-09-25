@@ -8,6 +8,11 @@ const schema = z.object({
     .min(64)
     .max(4_000_000)
     .refine((v) => v.startsWith("data:image/"), "Ожидается data:image/*"),
+  // Память сессии: фото, которые посетитель уже подтвердил (только текст признаков).
+  memory: z
+    .array(z.object({ sku: z.string().max(40), features: z.string().max(200) }))
+    .max(8)
+    .optional(),
 });
 
 export const Route = createFileRoute("/api/vision/identify")({
@@ -15,8 +20,11 @@ export const Route = createFileRoute("/api/vision/identify")({
     handlers: {
       POST: async ({ request }) => {
         let raw: string;
+        let memory: { sku: string; features: string }[] = [];
         try {
-          raw = schema.parse(await request.json()).image;
+          const body = schema.parse(await request.json());
+          raw = body.image;
+          memory = body.memory ?? [];
         } catch {
           return Response.json({ error: "Некорректный кадр" }, { status: 400 });
         }
@@ -41,7 +49,7 @@ export const Route = createFileRoute("/api/vision/identify")({
             logVisionFail,
             verdictCategory,
           } = await import("@/lib/vision.server");
-          const verdict = await identifyPart(image);
+          const verdict = await identifyPart(image, memory);
 
           const brief = (p: {
             sku: string;
