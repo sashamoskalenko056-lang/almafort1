@@ -477,6 +477,10 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
     [result],
   );
 
+  useEffect(() => {
+    if (sizeVariants.length === 1) setSize(sizeVariants[0]!.sku);
+  }, [sizeVariants]);
+
   if (!open) return null;
 
   const showViewfinder =
