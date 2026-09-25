@@ -927,6 +927,16 @@
       "expires_at": "2026-09-04T07:19:54.999Z"
     }
   ],
+  "vision_feedback": [
+    {
+      "id": "e77e7789-8bba-4fa1-b97b-4d6699ad2196",
+      "created_at": "2026-09-25T14:34:38.604Z",
+      "updated_at": "2026-09-25T14:34:38.605Z",
+      "sku": "KR-50",
+      "predicted_sku": null,
+      "features": "тест: чёрный держатель с кольцом"
+    }
+  ],
   "bulk_requests": [
     {
       "id": "cbf60106-4198-46a5-903a-299ec9b25724",
