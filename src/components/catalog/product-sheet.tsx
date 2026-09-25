@@ -679,7 +679,12 @@ export function ProductSheet({
                   </div>
                 )}
                 {galleryImages.length > 0 && (
-                  <div role="tablist" aria-label="Режим просмотра" className="mb-3 inline-flex rounded-sm border border-border p-0.5">
+                  <div role="tablist" aria-label="Режим просмотра" className="relative mb-3 inline-flex rounded-full border border-border bg-muted/60 p-1 shadow-inner">
+                    <span
+                      aria-hidden
+                      className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-primary shadow-sm transition-transform duration-300 ease-out"
+                      style={{ transform: mediaView === "3d" ? "translateX(0)" : "translateX(100%)" }}
+                    />
                     {(["3d", "photo"] as const).map((m) => {
                       const active = m === "3d" ? mediaView === "3d" : mediaView !== "3d";
                       return (
@@ -689,8 +694,8 @@ export function ProductSheet({
                           role="tab"
                           aria-selected={active}
                           onClick={() => setMediaView(m === "3d" ? "3d" : 0)}
-                          className={`rounded-[3px] px-3 py-1 text-xs font-medium transition-colors ${
-                            active ? "bg-primary text-primary-foreground" : "text-foreground hover:text-primary"
+                          className={`relative z-10 rounded-full px-4 py-1.5 text-xs font-medium transition-colors duration-300 ${
+                            active ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                           }`}
                         >
                           {m === "3d" ? "3D-модель" : `Фото · ${galleryImages.length}`}
@@ -699,50 +704,61 @@ export function ProductSheet({
                     })}
                   </div>
                 )}
-                {mediaView !== "3d" && galleryImages[mediaView] ? (
-                  <div className="grid h-64 place-items-center overflow-hidden rounded-lg border border-border bg-card shadow-sm sm:h-72 lg:h-[380px]">
-                    <img
-                      key={galleryImages[mediaView]!.full_url}
-                      src={galleryImages[mediaView]!.full_url}
-                      alt={galleryImages[mediaView]!.caption ?? product.name}
-                      className="h-full w-full animate-in fade-in object-contain p-3"
-                    />
+                <div className="relative h-64 overflow-hidden rounded-lg border border-border bg-card shadow-sm sm:h-72 lg:h-[380px]">
+                  <div
+                    className={`absolute inset-0 transition-opacity duration-300 ease-out ${
+                      mediaView === "3d" ? "opacity-100" : "pointer-events-none opacity-0"
+                    }`}
+                  >
+                    <ClientOnly fallback={<CadViewerPlaceholder />}>
+                      {CadViewer ? (
+                        <CadViewer
+                          key={isKrepss ? KREPSS_VARIANTS[krepssVariant]!.id : product.sku}
+                          glbUrl={
+                            isKrepss
+                              ? `/cad/KREPSS-${KREPSS_VARIANTS[krepssVariant]!.id}.glb`
+                              : product.engineering_assets.model_glb_url
+                          }
+                          category={product.category}
+                          color={partColor}
+                          material={
+                            PLUG_MM[product.sku] ? { ...partMaterial, roughness: 0.8, metalness: 0.1 } : partMaterial
+                          }
+                          {...(isKrepss
+                            ? { modelRotation: [KREPSS_VARIANTS[krepssVariant]!.rotationX, 0, 0] as const }
+                            : {})}
+                          {...(PLUG_MM[product.sku] ? { zoom: PLUG_MM[product.sku] } : {})}
+                        />
+                      ) : cad3dFailed ? (
+                        <CadStaticFallback product={product} />
+                      ) : (
+                        <CadViewerPlaceholder />
+                      )}
+                    </ClientOnly>
                   </div>
-                ) : (
-                <ClientOnly fallback={<CadViewerPlaceholder />}>
-                  {CadViewer ? (
-                    <CadViewer
-                      key={isKrepss ? KREPSS_VARIANTS[krepssVariant]!.id : product.sku}
-                      glbUrl={
-                        isKrepss
-                          ? `/cad/KREPSS-${KREPSS_VARIANTS[krepssVariant]!.id}.glb`
-                          : product.engineering_assets.model_glb_url
-                      }
-                      category={product.category}
-                      color={partColor}
-                      material={
-                        PLUG_MM[product.sku] ? { ...partMaterial, roughness: 0.8, metalness: 0.1 } : partMaterial
-                      }
-                      {...(isKrepss
-                        ? { modelRotation: [KREPSS_VARIANTS[krepssVariant]!.rotationX, 0, 0] as const }
-                        : {})}
-                      {...(PLUG_MM[product.sku] ? { zoom: PLUG_MM[product.sku] } : {})}
-                    />
-                  ) : cad3dFailed ? (
-                    <CadStaticFallback product={product} />
-                  ) : (
-                    <CadViewerPlaceholder />
+                  {galleryImages.length > 0 && (
+                    <div
+                      className={`absolute inset-0 grid place-items-center transition-all duration-300 ease-out ${
+                        mediaView !== "3d" ? "scale-100 opacity-100" : "pointer-events-none scale-[0.98] opacity-0"
+                      }`}
+                    >
+                      <img
+                        key={galleryImages[mediaView === "3d" ? 0 : mediaView]?.full_url}
+                        src={galleryImages[mediaView === "3d" ? 0 : mediaView]?.full_url}
+                        alt={galleryImages[mediaView === "3d" ? 0 : mediaView]?.caption ?? product.name}
+                        className="h-full w-full object-contain p-3"
+                      />
+                    </div>
                   )}
-                </ClientOnly>
-                )}
+                </div>
                 {galleryImages.length > 0 && (
                   <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
                     <button
                       type="button"
                       onClick={() => setMediaView("3d")}
                       aria-label="3D-модель"
-                      className={`grid size-14 shrink-0 place-items-center rounded-md border bg-card font-mono text-[11px] font-semibold transition-colors ${
-                        mediaView === "3d" ? "border-primary text-primary" : "border-border text-muted-foreground hover:border-primary"
+                      className={`grid size-14 shrink-0 place-items-center rounded-md border bg-card font-mono text-[11px] font-semibold transition-all duration-200 hover:scale-105 ${
+                        mediaView === "3d" ? "border-primary text-primary shadow-sm" : "border-border text-muted-foreground hover:border-primary"
                       }`}
                     >
                       3D
@@ -753,8 +769,8 @@ export function ProductSheet({
                         type="button"
                         onClick={() => setMediaView(i)}
                         aria-label={`Фото ${i + 1}`}
-                        className={`size-14 shrink-0 overflow-hidden rounded-md border bg-card p-0.5 transition-colors ${
-                          mediaView === i ? "border-primary" : "border-border hover:border-primary"
+                        className={`size-14 shrink-0 overflow-hidden rounded-md border bg-card p-0.5 transition-all duration-200 hover:scale-105 ${
+                          mediaView === i ? "border-primary shadow-sm" : "border-border hover:border-primary"
                         }`}
                       >
                         <img src={img.thumb_url} alt="" loading="lazy" className="size-full rounded-[4px] object-contain" />
