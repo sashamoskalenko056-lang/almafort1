@@ -757,8 +757,8 @@ export function ProductSheet({
                       type="button"
                       onClick={() => setMediaView("3d")}
                       aria-label="3D-модель"
-                      className={`grid size-14 shrink-0 place-items-center rounded-md border bg-card font-mono text-[11px] font-semibold transition-colors ${
-                        mediaView === "3d" ? "border-primary text-primary" : "border-border text-muted-foreground hover:border-primary"
+                      className={`grid size-14 shrink-0 place-items-center rounded-md border bg-card font-mono text-[11px] font-semibold transition-all duration-200 hover:scale-105 ${
+                        mediaView === "3d" ? "border-primary text-primary shadow-sm" : "border-border text-muted-foreground hover:border-primary"
                       }`}
                     >
                       3D
@@ -769,8 +769,8 @@ export function ProductSheet({
                         type="button"
                         onClick={() => setMediaView(i)}
                         aria-label={`Фото ${i + 1}`}
-                        className={`size-14 shrink-0 overflow-hidden rounded-md border bg-card p-0.5 transition-colors ${
-                          mediaView === i ? "border-primary" : "border-border hover:border-primary"
+                        className={`size-14 shrink-0 overflow-hidden rounded-md border bg-card p-0.5 transition-all duration-200 hover:scale-105 ${
+                          mediaView === i ? "border-primary shadow-sm" : "border-border hover:border-primary"
                         }`}
                       >
                         <img src={img.thumb_url} alt="" loading="lazy" className="size-full rounded-[4px] object-contain" />
