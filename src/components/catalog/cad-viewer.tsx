@@ -174,7 +174,10 @@ function GltfModel({
     wrap.add(s);
     wrap.scale.setScalar(k);
     return wrap;
-  }, [scene, wire, color, material, mmScale, rotation]);
+    // Зависимости по значению: новые массивы/объекты при каждом касании
+    // не должны перестраивать модель.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scene, wire, color, JSON.stringify(material), mmScale, rotation[0], rotation[1], rotation[2]]);
   // Освобождаем материалы предыдущего меша (геометрия общая с кэшем useGLTF).
   useEffect(
     () => () => {
@@ -182,10 +185,12 @@ function GltfModel({
         const m = o as Mesh;
         if (m.isMesh && m.material && !Array.isArray(m.material)) (m.material as THREE.Material).dispose();
       });
-      useGLTF.clear(url);
     },
-    [cloned, url],
+    [cloned],
   );
+  // Кэш GLB чистим только при закрытии карточки/смене модели, иначе
+  // любое перестроение вызывает повторную загрузку.
+  useEffect(() => () => useGLTF.clear(url), [url]);
   return <primitive object={cloned} />;
 }
 
