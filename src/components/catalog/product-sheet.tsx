@@ -606,6 +606,16 @@ export function ProductSheet({
             </DialogHeader>
 
             <div className="flex flex-col gap-6">
+              {product.image_url && (
+                <div className="flex aspect-[16/9] w-full items-center justify-center overflow-hidden rounded-lg border border-border bg-card">
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    loading="lazy"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              )}
               <CollapsibleText text={service.description} />
 
               <dl className="grid grid-cols-1 gap-x-6 gap-y-3 border-t border-border pt-6 text-sm sm:grid-cols-2">
