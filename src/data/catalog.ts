@@ -398,6 +398,7 @@ const SKU_IMAGES: Record<string, string> = {
   "KR-50": "/products/kr-50.jpg",
   "MK-SHD": "/products/mk-shd.webp",
   "MK-UG": "/products/mk-ug.webp",
+  "STK-POL-01": "/products/stk-pol-01.webp",
 };
 
 export const PRODUCTS: Product[] = raw.map(
