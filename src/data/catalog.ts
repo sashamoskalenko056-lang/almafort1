@@ -433,6 +433,7 @@ const SKU_IMAGES: Record<string, string> = {
   "ZGV-D20": "/products/zgv-d-round.webp",
   "ZGV-D22": "/products/zgv-d-round.webp",
   "ZGV-D25": "/products/zgv-d-round.webp",
+  "OP-P-STD": "/products/op-p-std.webp",
 };
 
 /** Галерея фото артикула: первое — обложка (совпадает с SKU_IMAGES). */
