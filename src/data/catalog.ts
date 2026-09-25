@@ -386,7 +386,7 @@ const SKU_SPEC_ROWS: Record<string, [string, string][]> = {
 const SKU_GLB: Record<string, string> = {
   "ZGV-25x25": "/cad/ZGV-25x25.glb",
   "ZGV-60x40": "/cad/ZGV-60x40.glb",
-  "KR-50": "/cad/KR-50.glb",
+  "OP-SH-H50": "/cad/OP-SH-H50.glb",
   "OP-H15": "/cad/OP-H15.glb",
   "OP-H20": "/cad/OP-H20.glb",
   "OP-H35": "/cad/OP-H35.glb",

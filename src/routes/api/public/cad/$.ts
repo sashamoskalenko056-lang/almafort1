@@ -5,7 +5,7 @@ type Ext = "step" | "dwg" | "pdf" | "glb" | "sldprt";
 
 /** Понятные имена скачиваемых файлов по артикулу. */
 const NICE_NAME: Record<string, string> = {
-  "KR-50": "Derzhatel-kolpachka-Karshar-KR-50",
+  "OP-SH-H50": "Opora-sharovaya-h50",
   "OP-H15": "Opora-mebelnaya-h15",
   "OP-H20": "Opora-mebelnaya-h20",
   "OP-H35": "Opora-mebelnaya-h35",
