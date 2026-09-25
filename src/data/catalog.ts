@@ -419,6 +419,13 @@ const SKU_IMAGES: Record<string, string> = {
   "OP-H20": "/products/op-h-cover.webp",
   "OP-H35": "/products/op-h-cover.webp",
   "OP-H50": "/products/op-h-cover.webp",
+  "ZGV-15x15": "/products/zgv-cover.webp",
+  "ZGV-20x20": "/products/zgv-cover.webp",
+  "ZGV-25x25": "/products/zgv-cover.webp",
+  "ZGV-40x40": "/products/zgv-cover.webp",
+  "ZGV-60x60": "/products/zgv-cover.webp",
+  "ZGV-80x80": "/products/zgv-cover.webp",
+  "ZGV-100x100": "/products/zgv-cover.webp",
 };
 
 /** Галерея фото артикула: первое — обложка (совпадает с SKU_IMAGES). */
@@ -427,6 +434,13 @@ export const SKU_GALLERY: Record<string, string[]> = {
   "OP-H20": ["/products/op-h-cover.webp", "/products/op-h-side.webp", "/products/op-h-bottom.webp", "/products/op-h-top.webp"],
   "OP-H35": ["/products/op-h-cover.webp", "/products/op-h-side.webp", "/products/op-h-bottom.webp", "/products/op-h-top.webp"],
   "OP-H50": ["/products/op-h-cover.webp", "/products/op-h-side.webp", "/products/op-h-bottom.webp", "/products/op-h-top.webp"],
+  "ZGV-15x15": ["/products/zgv-cover.webp", "/products/zgv-inside.webp"],
+  "ZGV-20x20": ["/products/zgv-cover.webp", "/products/zgv-inside.webp"],
+  "ZGV-25x25": ["/products/zgv-cover.webp", "/products/zgv-inside.webp"],
+  "ZGV-40x40": ["/products/zgv-cover.webp", "/products/zgv-inside.webp"],
+  "ZGV-60x60": ["/products/zgv-cover.webp", "/products/zgv-inside.webp"],
+  "ZGV-80x80": ["/products/zgv-cover.webp", "/products/zgv-inside.webp"],
+  "ZGV-100x100": ["/products/zgv-cover.webp", "/products/zgv-inside.webp"],
 };
 
 export const PRODUCTS: Product[] = raw.map(
