@@ -250,7 +250,7 @@ function FacetPage() {
   const base = facets.path;
   const assetGroups = useAssetGroups();
 
-  // Deep linking: ?sku=ZGV-20x40 открывает карточку товара при загрузке.
+  // Deep linking: ?sku=ZGV-40x20 открывает карточку товара при загрузке.
   const [active, setActive] = useState<Product | null>(null);
 
   const openProduct = useCallback((p: Product) => {

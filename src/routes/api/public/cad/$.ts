@@ -11,7 +11,9 @@ const NICE_NAME: Record<string, string> = {
   "OP-H35": "Opora-mebelnaya-h35",
   "OP-H50": "Opora-mebelnaya-h50",
   "ZGV-25x25": "Zaglushka-25x25",
-  "ZGV-40x60": "Zaglushka-40x60",
+  "ZGV-40x20": "Zaglushka-40x20",
+  "ZGV-60x40": "Zaglushka-60x40",
+  "ZGV-60x40": "Zaglushka-40x60",
 };
 
 const MIME: Record<Ext, string> = {

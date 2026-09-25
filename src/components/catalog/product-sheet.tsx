@@ -87,7 +87,7 @@ const KREPSS_VARIANTS = [
 ] as const;
 
 const PLUG_MM: Record<string, { min: number; max: number }> = {
-  "ZGV-40x60": { min: 1.8, max: 6 },
+  "ZGV-60x40": { min: 1.8, max: 6 },
   "ZGV-25x25": { min: 1.0, max: 3.8 },
 };
 
@@ -274,8 +274,8 @@ const SKU_PROFILES: Record<string, PartProfile> = {
   "OP-PM-20": METAL_FRAME_SUPPORT_PROFILE,
   "OP-PM-25": METAL_FRAME_SUPPORT_PROFILE,
   "OP-P-STD": METAL_FRAME_SUPPORT_PROFILE,
-  "ZGV-20x40": RECT_TUBE_PLUG_PROFILE,
-  "ZGV-40x60": RECT_TUBE_PLUG_PROFILE,
+  "ZGV-40x20": RECT_TUBE_PLUG_PROFILE,
+  "ZGV-60x40": RECT_TUBE_PLUG_PROFILE,
   "ZGV-15x15": SQUARE_TUBE_PLUG_PROFILE,
   "ZGV-20x20": SQUARE_TUBE_PLUG_PROFILE,
   "ZGV-25x25": SQUARE_TUBE_PLUG_PROFILE,
