@@ -758,7 +758,7 @@ export function ProductSheet({
                             setCadViewer(null);
                             void loadCadViewer().then((Viewer) => setCadViewer(() => Viewer)).catch(() => setCad3dFailed(true));
                           }}
-                          onShowPhoto={galleryImages.length ? () => setMediaView(0) : undefined}
+                          {...(galleryImages.length ? { onShowPhoto: () => setMediaView(0) } : {})}
                         />
                       ) : (
                         <CadViewerPlaceholder />
@@ -1093,14 +1093,14 @@ class CadErrorBoundary extends Component<
   { children: ReactNode; onError: () => void },
   { failed: boolean }
 > {
-  state = { failed: false };
+  override state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
   }
-  componentDidCatch(_error: Error, _info: ErrorInfo) {
+  override componentDidCatch(_error: Error, _info: ErrorInfo) {
     this.props.onError();
   }
-  render() {
+  override render() {
     return this.state.failed ? null : this.props.children;
   }
 }

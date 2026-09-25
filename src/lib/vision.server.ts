@@ -357,8 +357,8 @@ export function matchProducts(v: VisionVerdict, limit = 3): Product[] {
  */
 function shapeConflict(p: Product, s: { square: boolean; round: boolean }): boolean {
   const text = `${p.name} ${p.dims}`;
-  if (s.square && !s.round) return /кругл|Ø/i.test(text);
-  if (s.round && !s.square) return /квадратн/i.test(text);
+  if (s.square && !s.round) return /кругл|прямоугольн|Ø/i.test(text);
+  if (s.round && !s.square) return /квадратн|прямоугольн/i.test(text);
   return false;
 }
 

@@ -94,6 +94,19 @@ export const Route = createFileRoute("/api/vision/identify")({
 
           if (verdict.status === "NOT_FOUND") {
             void logVisionFail(image, verdict);
+            // Для трубных заглушек форма надёжно определяет семейство, но не размер.
+            // Не называем это ошибкой распознавания: предлагаем правильный размерный ряд.
+            if (
+              category === "Заглушки внутренние" &&
+              /квадрат|прямоуг|кругл|square|rect|round|circle/i.test(verdict.shape)
+            ) {
+              return Response.json({
+                scenario: "exact",
+                verdict,
+                category,
+                variants: classVariants(verdict).map(brief),
+              });
+            }
             return Response.json({
               scenario: "notfound",
               verdict,
