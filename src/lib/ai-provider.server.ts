@@ -163,6 +163,12 @@ function authHeaders(r: Resolved): Record<string, string> {
 /** Человеческие сообщения вместо кодов ошибок провайдера. */
 function gatewayError(status: number, task: AiTask, detail = ""): AiGatewayError {
   const what = task === "vision" ? "распознавания" : "конфигуратора";
+  // Шлюз отвечает 401 и при пустом балансе — это не «неверный ключ».
+  if (/insufficient_balance|пополните баланс/i.test(detail))
+    return new AiGatewayError(
+      "ИИ-сервис временно недоступен: на счёте ИИ-шлюза закончился баланс.",
+      402,
+    );
   if (status === 429)
     return new AiGatewayError("Слишком много запросов к ИИ. Повторите через минуту.", status);
   if (status === 402 || status === 403)
