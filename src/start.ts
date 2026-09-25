@@ -4,6 +4,7 @@ import { renderErrorPage } from "./lib/error-page";
 import { maintenanceResponse, trailingSlashRedirect } from "./lib/seo-guard.server";
 import { ensureServerWebSocket } from "./lib/ws-polyfill.server";
 import { attachAuth } from "@/lib/auth-attacher";
+import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 
 // Node < 22 без глобального WebSocket: подстраховываем библиотеки, которым он нужен —
 // подставляем полифилл до любого серверного кода (SSR и server functions).
@@ -48,6 +49,6 @@ const seoGuardMiddleware = createMiddleware().server(async ({ next, request }) =
 });
 
 export const startInstance = createStart(() => ({
-  functionMiddleware: [attachAuth],
+  functionMiddleware: [attachSupabaseAuth, attachAuth],
   requestMiddleware: [wsMiddleware, errorMiddleware, csrfMiddleware, seoGuardMiddleware],
 }));
