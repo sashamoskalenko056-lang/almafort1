@@ -13,7 +13,7 @@ const NICE_NAME: Record<string, string> = {
   "ZGV-25x25": "Zaglushka-25x25",
   "ZGV-40x20": "Zaglushka-40x20",
   "ZGV-60x40": "Zaglushka-60x40",
-  "ZGV-60x40": "Zaglushka-40x60",
+  "ZGV-60x40": "Zaglushka-60x40",
 };
 
 const MIME: Record<Ext, string> = {
