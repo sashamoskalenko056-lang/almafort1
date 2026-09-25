@@ -142,6 +142,19 @@ export const Route = createFileRoute("/api/vision/identify")({
             });
           }
 
+          if (
+            score >= 0.85 &&
+            category === "Заглушки внутренние" &&
+            /квадрат|прямоуг|кругл|square|rect|round|circle/i.test(verdict.shape)
+          ) {
+            return Response.json({
+              scenario: "exact",
+              verdict,
+              category,
+              variants: classVariants(verdict).map(brief),
+            });
+          }
+
           if (score >= 0.5) {
 
             const matches = matchProducts(verdict, 3).map(brief);

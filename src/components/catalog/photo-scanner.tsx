@@ -404,7 +404,9 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
     }
 
     // Сжимаем на клиенте: 1024×1024 WebP вместо 4K/8 МБ — иначе на 3G ответа не дождаться.
-    const prepared = compress(decoded.source, decoded.width, decoded.height);
+    // Загруженный снимок не обрезаем квадратом: деталь может быть вытянутой или
+    // лежать не по центру. Камерный кадр уже обрезан по видимой рамке отдельно.
+    const prepared = compress(decoded.source, decoded.width, decoded.height, { square: false });
     setFrozen(prepared.dataUrl);
     // Превью загруженного файла живёт независимо от статуса анализа:
     // клиент должен видеть, что именно он отправил, даже при ошибке.

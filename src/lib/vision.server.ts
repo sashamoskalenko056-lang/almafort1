@@ -63,7 +63,12 @@ export function catalogGrounding(): string {
           .join("\n"),
     )
     .join("\n") +
-    "\n\n## Класс: Кляймер / Монтажный крепёж\n" +
+    "\n\n## ВАЖНЫЕ РАЗЛИЧИЯ ПОХОЖИХ ДЕТАЛЕЙ\n" +
+    "- MK-SD: круглый бежевый корпус, три отверстия и отдельная выпуклая круглая крышка.\n" +
+    "- STK-POL-01: круглый серый диск с одной глубокой прямой прорезью, без отдельных отверстий.\n" +
+    "- MK-SHD: вытянутая площадка с тремя отверстиями и высокой U-образной стенкой на конце.\n" +
+    "- OP-PM-20/25: полый квадратный колпачок-подпятник с толстыми стенками и открытой полостью.\n" +
+    "\n## Класс: Кляймер / Монтажный крепёж\n" +
     "- Плотная пластиковая или металлическая планка/колодка прямоугольной формы с центральным " +
     "сквозным монтажным отверстием (под саморез/винт) и выступающим тыльным элементом для " +
     "фиксации панелей, зеркал или мебельных элементов. Такие изделия ВСЕГДА относятся к каталогу " +
@@ -368,10 +373,17 @@ export function classVariants(v: VisionVerdict, limit = 24): Product[] {
   if (!category) return [];
   const square = /квадрат|square/.test(v.shape);
   const round = /кругл|round|circle/.test(v.shape);
+  const rect = /прямоуг|rect/.test(v.shape);
   const exact = v.sku ? PRODUCTS.find((p) => p.sku === v.sku && !p.is_service) : undefined;
   const familyName = exact?.name;
   return PRODUCTS.filter((p) => p.category === category && !p.is_service)
-    .filter((p) => !familyName || p.name === familyName)
+    .filter((p) => {
+      if (familyName) return p.name === familyName;
+      if (square) return /квадратн/i.test(p.name);
+      if (round) return /кругл/i.test(p.name);
+      if (rect) return /прямоугольн/i.test(p.name);
+      return true;
+    })
     .filter((p) => !shapeConflict(p, { square, round }))
     .sort((a, b) => b.stock.qty - a.stock.qty)
     .slice(0, limit);
