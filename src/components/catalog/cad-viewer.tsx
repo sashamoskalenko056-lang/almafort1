@@ -73,6 +73,37 @@ function pbrProps(material: PartMaterial) {
   };
 }
 
+/** Стиль Wireframe, адаптированный под цвет детали: линии + полупрозрачная «призрачная» заливка. */
+export function wireStyle(hex: string) {
+  const c = new THREE.Color(hex);
+  const hsl = { h: 0, s: 0, l: 0 };
+  c.getHSL(hsl);
+  if (hsl.l >= 0.7) return { bg: "#ffffff", line: "#1a1a1a", fill: "#d9dcdf", opacity: 0.85 };
+  if (hsl.l <= 0.18) return { bg: "#f0f0f0", line: "#2c3e50", fill: "#6b7178", opacity: 0.8 };
+  const line = new THREE.Color().setHSL(hsl.h, Math.min(1, hsl.s * 0.8), 0.12);
+  return { bg: "#ffffff", line: `#${line.getHexString()}`, fill: hex, opacity: 0.8 };
+}
+
+function applyWire(m: Mesh, color: string) {
+  const st = wireStyle(color);
+  m.material = new THREE.MeshStandardMaterial({
+    color: st.fill,
+    transparent: true,
+    opacity: st.opacity,
+    roughness: 0.7,
+    depthWrite: true,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
+    polygonOffsetUnits: 1,
+  }) as never;
+  const lines = new THREE.Mesh(
+    m.geometry,
+    new THREE.MeshBasicMaterial({ color: st.line, wireframe: true, transparent: true, opacity: 0.55 }),
+  );
+  lines.raycast = () => {};
+  m.add(lines);
+}
+
 function GltfModel({
   url,
   wire,
@@ -91,27 +122,28 @@ function GltfModel({
   const { scene } = useGLTF(url, true, undefined, attachDraco as never);
   const cloned = useMemo(() => {
     const s = scene.clone(true);
+    const meshes: Mesh[] = [];
     s.traverse((o) => {
       const m = o as Mesh;
-      if (m.isMesh && m.material && !Array.isArray(m.material)) {
-        // Базовые материалы из GLB заменяем на физически корректный пластик.
-        const src = m.material as unknown as { map?: Texture | null; aoMap?: Texture | null };
-        // Wireframe: контрастные чёрные линии на белом фоне холста.
-        const mat = wire
-          ? new THREE.MeshBasicMaterial({ color: new THREE.Color("#000000"), wireframe: true })
-          : new THREE.MeshPhysicalMaterial({
+      if (m.isMesh && m.material && !Array.isArray(m.material)) meshes.push(m);
+    });
+    for (const m of meshes) {
+      // Базовые материалы из GLB заменяем на физически корректный пластик.
+      const src = m.material as unknown as { map?: Texture | null; aoMap?: Texture | null };
+      if (wire) {
+        applyWire(m, color);
+      } else {
+        m.material = new THREE.MeshPhysicalMaterial({
           color: new THREE.Color(color),
-          wireframe: wire,
           ...pbrProps(material),
           ...(material.metalness > 0 && mmScale ? { metalness: material.metalness } : {}),
           ...(src.map ? { map: src.map } : {}),
           ...(src.aoMap ? { aoMap: src.aoMap, aoMapIntensity: 1 } : {}),
-        });
-        m.material = mat as never;
-        m.castShadow = true;
-        m.receiveShadow = true;
+        }) as never;
       }
-    });
+      m.castShadow = true;
+      m.receiveShadow = true;
+    }
     // CAD-модели Z-up, Three.js Y-up. Ориентация задаётся для конкретного
     // артикула: у КРЕПСС +Z направлен к шляпке, поэтому нужен -90° по X.
     s.rotation.set(...rotation);
@@ -189,8 +221,9 @@ function ProxyModel({
   color: string;
   material: PartMaterial;
 }) {
+  const ws = wireStyle(color);
   const mat = wire ? (
-    <meshBasicMaterial color="#000000" wireframe />
+    <meshBasicMaterial color={ws.line} wireframe />
   ) : (
     <meshPhysicalMaterial color={color} {...pbrProps(material)} />
   );
