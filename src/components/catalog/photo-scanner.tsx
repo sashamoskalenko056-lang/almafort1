@@ -973,7 +973,9 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
                 <img src={entry.thumb} alt="" className="size-14 shrink-0 rounded-md object-cover" />
                 <div className="min-w-0 flex-1 text-sm">
                   <p className="font-medium text-foreground">
-                    {entry.sku
+                    {result.scenario === "notfound"
+                      ? "Узнали деталь? Нажмите нужный артикул — сканер запомнит это фото."
+                      : entry.sku
                       ? `Похоже на ${entry.name} (${entry.sku}). Запомнить это фото для этой позиции?`
                       : "Не уверен, что это за деталь. Выберите позицию, и я запомню фото."}
                   </p>
@@ -1231,10 +1233,17 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
                     {result.matches.map((m) => (
                       <li
                         key={m.sku}
-                        className="flex items-center gap-3 rounded-md border border-zinc-200 bg-white p-3"
+                        className="flex items-center gap-3 rounded-xl border border-border bg-card p-2.5"
                       >
+                        <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-white">
+                          {PRODUCTS.find((p) => p.sku === m.sku)?.image_url ? (
+                            <img src={PRODUCTS.find((p) => p.sku === m.sku)!.image_url!} alt="" loading="lazy" className="h-full w-full object-contain p-1" />
+                          ) : (
+                            <span className="text-[10px] font-semibold text-muted-foreground">{m.sku.slice(0, 3)}</span>
+                          )}
+                        </span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-foreground">
+                          <span className="block text-base font-bold leading-tight text-foreground">
                             {m.name}
                           </span>
                           <span className="block text-xs text-muted-foreground">
