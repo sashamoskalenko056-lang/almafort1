@@ -436,11 +436,11 @@ export function CadViewer({
     <div
       className={`relative h-64 overflow-hidden rounded-lg ${
         wire ? "bg-background" : "bg-surface"
-      } sm:h-72 lg:h-[380px] ${
+      } transition-colors duration-300 sm:h-72 lg:h-[380px] ${
         grabbing ? "cursor-grabbing" : "cursor-grab"
       }`}
       // Жест вращения не должен прокручивать страницу под пальцем
-      style={{ touchAction: "none", ...(wire ? { backgroundColor: "#ffffff" } : {}) }}
+      style={{ touchAction: "none", ...(wire ? { backgroundColor: wireStyle(color).bg } : {}) }}
       onPointerUp={() => setGrabbing(false)}
       onPointerLeave={() => setGrabbing(false)}
     >
@@ -448,7 +448,7 @@ export function CadViewer({
         camera={{ position: [2.6, 1.8, 2.6], fov: 40 }}
         dpr={isMobile ? [1, 1.5] : [1, 2]}
         shadows={!isMobile}
-        gl={{ antialias: !isMobile, powerPreference: "default" }}
+        gl={{ antialias: true, powerPreference: "default" }}
         onCreated={({ gl, scene }) => {
           glRef.current = gl as unknown as typeof glRef.current;
           const canvas = (gl as unknown as { domElement: HTMLCanvasElement }).domElement;
@@ -522,7 +522,12 @@ export function CadViewer({
       <button
         type="button"
         onClick={() => setWire((v) => !v)}
-        className="absolute bottom-3 left-3 flex items-center gap-2 rounded-sm border border-border bg-card/90 px-3 py-1.5 text-xs font-medium text-foreground backdrop-blur hover:border-primary hover:text-primary"
+        aria-pressed={wire}
+        className={`absolute bottom-3 left-3 flex items-center gap-2 rounded-sm border px-3 py-1.5 text-xs font-medium backdrop-blur transition-colors ${
+          wire
+            ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+            : "border-border bg-card/90 text-foreground hover:border-primary hover:text-primary"
+        }`}
       >
         {wire ? <Box className="size-3.5" strokeWidth={1.75} /> : <Grid3x3 className="size-3.5" strokeWidth={1.75} />}
         {wire ? "Solid (пластик)" : "Wireframe (сетка)"}
