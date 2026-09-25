@@ -882,7 +882,7 @@ export function ProductSheet({
                   </p>
                   {(() => {
                     type Row = { key: string; fmt: "step" | "dwg" | "pdf" | "stl" | "sldprt"; label: string; hint: string; Icon: typeof Layers; href: string; name: string };
-                    const base = PLUG_MM[product.sku] ? `Zaglushka-${product.sku.slice(4)}` : product.sku === "KR-50" ? "Derzhatel-kolpachka-Karshar-KR-50" : product.sku === "OP-H15" ? "Opora-mebelnaya-h15" : product.sku === "OP-H20" ? "Opora-mebelnaya-h20" : product.sku === "OP-H35" ? "Opora-mebelnaya-h35" : product.sku === "OP-H50" ? "Opora-mebelnaya-h50" : product.sku;
+                    const base = PLUG_MM[product.sku] ? `Zaglushka-${product.sku.slice(4)}` : product.sku === "OP-SH-H50" ? "Opora-sharovaya-h50" : product.sku === "OP-H15" ? "Opora-mebelnaya-h15" : product.sku === "OP-H20" ? "Opora-mebelnaya-h20" : product.sku === "OP-H35" ? "Opora-mebelnaya-h35" : product.sku === "OP-H50" ? "Opora-mebelnaya-h50" : product.sku;
                     const rows: Row[] = [];
                     if (isKrepss) {
                       const v = KREPSS_VARIANTS[krepssVariant]!;
