@@ -426,6 +426,8 @@ const SKU_IMAGES: Record<string, string> = {
   "ZGV-60x60": "/products/zgv-cover.webp",
   "ZGV-80x80": "/products/zgv-cover.webp",
   "ZGV-100x100": "/products/zgv-cover.webp",
+  "ZGV-20x40": "/products/zgv-rect.webp",
+  "ZGV-40x60": "/products/zgv-rect.webp",
 };
 
 /** Галерея фото артикула: первое — обложка (совпадает с SKU_IMAGES). */
