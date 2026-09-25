@@ -210,8 +210,9 @@ export async function identifyPart(
       jsonObject: true,
       temperature: 0,
       // Короткий ответ + запас на медленный ответ шлюза: лучше подождать, чем ложный обрыв.
-      maxTokens: 500,
-      timeoutMs: 40_000,
+      // Модель «думает» перед ответом — 500 токенов обрезали JSON на полуслове.
+      maxTokens: 4000,
+      timeoutMs: 60_000,
     });
   } catch (e) {
     void logLlmCall({
@@ -277,7 +278,7 @@ export async function identifyPart(
     color: String(parsed.color ?? "").toLowerCase(),
     has_threads: Boolean(parsed.has_threads),
     confidence:
-      status === "INVALID"
+      status === "INVALID" || parseStatus === "json_error"
         ? Math.min(0.09, conf)
         : status === "NOT_FOUND"
           ? Math.min(0.49, conf)
