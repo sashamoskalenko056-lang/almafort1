@@ -399,6 +399,17 @@ export function CadViewer({
   const [auto, setAuto] = useState(true);
   const [grabbing, setGrabbing] = useState(false);
   const [lost, setLost] = useState(false);
+  // Мобильные браузеры отбирают WebGL-контекст (сворачивание, нехватка памяти) —
+  // пересоздаём Canvas автоматически, до 3 попыток.
+  const [canvasKey, setCanvasKey] = useState(0);
+  useEffect(() => {
+    if (!lost || canvasKey >= 3) return;
+    const t = setTimeout(() => {
+      setLost(false);
+      setCanvasKey((k) => k + 1);
+    }, 600);
+    return () => clearTimeout(t);
+  }, [lost, canvasKey]);
   // На смартфонах режем нагрузку: без сглаживания и теней, dpr не выше 1.5.
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   const glRef = useRef<{
@@ -445,6 +456,7 @@ export function CadViewer({
       onPointerLeave={() => setGrabbing(false)}
     >
       <Canvas
+        key={canvasKey}
         camera={{ position: [2.6, 1.8, 2.6], fov: 40 }}
         dpr={isMobile ? [1, 1.5] : [1, 2]}
         shadows={!isMobile}
@@ -456,6 +468,7 @@ export function CadViewer({
             e.preventDefault();
             setLost(true);
           });
+          canvas.addEventListener("webglcontextrestored", () => setLost(false));
           void scene;
         }}
         onPointerDown={() => {
@@ -511,7 +524,7 @@ export function CadViewer({
         />
       </Canvas>
 
-      {lost && (
+      {lost && canvasKey >= 3 && (
         <div className="absolute inset-0 grid place-items-center bg-surface p-6 text-center font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
           3D-просмотр недоступен на этом устройстве
         </div>
