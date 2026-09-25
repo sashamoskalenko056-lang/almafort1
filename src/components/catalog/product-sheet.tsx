@@ -407,13 +407,15 @@ export function ProductSheet({
   const [calcState, setCalcState] = useState<"idle" | "loading" | "ready" | "failed">("idle");
   const assets = useAssetGroups();
   const assetGroup = product ? assets.get(product.sku) : undefined;
-  // Галерея: фото из пакета контента, иначе одиночное image_url товара.
+  // Галерея: фото из пакета контента, иначе галерея артикула, иначе одиночное image_url.
   const galleryImages =
     assetGroup?.images.length
       ? assetGroup.images
-      : product?.image_url
-        ? [{ thumb_url: product.image_url, full_url: product.image_url }]
-        : [];
+      : product && SKU_GALLERY[product.sku]?.length
+        ? SKU_GALLERY[product.sku].map((url) => ({ thumb_url: url, full_url: url }))
+        : product?.image_url
+          ? [{ thumb_url: product.image_url, full_url: product.image_url }]
+          : [];
   const [mediaView, setMediaView] = useState<"3d" | number>("3d");
   useEffect(() => setMediaView("3d"), [product?.sku]);
   const service = product ? SERVICE_PROFILES[product.sku] : undefined;
