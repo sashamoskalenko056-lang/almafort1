@@ -466,15 +466,17 @@ export function ProductSheet({
   const [bulkOpen, setBulkOpen] = useState(false);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [CadViewer, setCadViewer] = useState<ComponentType<CadViewerProps> | null>(null);
-  /** Если WebGL не поднялся за 3 секунды — показываем статичное 2D-изображение. */
+  /** Если 3D-модуль не загрузился за 20 секунд — показываем статичное 2D-изображение. */
   const [cad3dFailed, setCad3dFailed] = useState(false);
 
   useEffect(() => {
     let active = true;
     const timer = window.setTimeout(() => {
       if (active) setCad3dFailed(true);
-    }, 3000);
+    }, 20000);
+    // На медленной мобильной сети модуль 3D грузится дольше — даём 20 с и одну повторную попытку.
     void loadCadViewer()
+      .catch(() => loadCadViewer())
       .then((Viewer) => {
         if (!active) return;
         window.clearTimeout(timer);
@@ -1080,7 +1082,7 @@ function CadStaticFallback({ product }: { product: Product }) {
       <div className="w-40 max-w-full">
         <ProductThumb src={product.image_url} alt={product.name} />
         <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          3D-просмотр недоступен на этом устройстве
+          3D-модель загружается дольше обычного — проверьте интернет или откройте «Фото»
         </p>
       </div>
     </div>
