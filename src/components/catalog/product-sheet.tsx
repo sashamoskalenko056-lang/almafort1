@@ -31,6 +31,7 @@ import { Download, FileText, Layers, Ruler, Truck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Product } from "@/data/catalog";
+import { SKU_GALLERY } from "@/data/catalog";
 import { formatPrice, lineTotal } from "@/lib/pricing";
 import { trackCadDownload, trackViewItem } from "@/lib/metrika";
 import { CityInput, type CityValue } from "@/components/cart/city-input";
