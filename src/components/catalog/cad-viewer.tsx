@@ -78,10 +78,10 @@ export function wireStyle(hex: string) {
   const c = new THREE.Color(hex);
   const hsl = { h: 0, s: 0, l: 0 };
   c.getHSL(hsl);
-  if (hsl.l >= 0.7) return { bg: "#ffffff", line: "#1a1a1a", fill: "#d9dcdf", opacity: 0.85 };
-  if (hsl.l <= 0.18) return { bg: "#f0f0f0", line: "#2c3e50", fill: "#6b7178", opacity: 0.8 };
+  if (hsl.l >= 0.7) return { bg: "#ffffff", line: "#1a1a1a", fill: "#d9dcdf", opacity: 0.85, lineOpacity: 0.55 };
+  if (hsl.l <= 0.18) return { bg: "#f0f0f0", line: "#2c3e50", fill: "#8e959d", opacity: 0.8, lineOpacity: 0.3 };
   const line = new THREE.Color().setHSL(hsl.h, Math.min(1, hsl.s * 0.8), 0.12);
-  return { bg: "#ffffff", line: `#${line.getHexString()}`, fill: hex, opacity: 0.8 };
+  return { bg: "#ffffff", line: `#${line.getHexString()}`, fill: hex, opacity: 0.8, lineOpacity: 0.45 };
 }
 
 function applyWire(m: Mesh, color: string) {
@@ -98,7 +98,7 @@ function applyWire(m: Mesh, color: string) {
   }) as never;
   const lines = new THREE.Mesh(
     m.geometry,
-    new THREE.MeshBasicMaterial({ color: st.line, wireframe: true, transparent: true, opacity: 0.55 }),
+    new THREE.MeshBasicMaterial({ color: st.line, wireframe: true, transparent: true, opacity: st.lineOpacity }),
   );
   lines.raycast = () => {};
   m.add(lines);
