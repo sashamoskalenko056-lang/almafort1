@@ -409,11 +409,12 @@ export function ProductSheet({
   const assets = useAssetGroups();
   const assetGroup = product ? assets.get(product.sku) : undefined;
   // Галерея: фото из пакета контента, иначе галерея артикула, иначе одиночное image_url.
-  const galleryImages =
+  const skuGallery = product ? (SKU_GALLERY[product.sku] ?? []) : [];
+  const galleryImages: { thumb_url: string; full_url: string; caption?: string }[] =
     assetGroup?.images.length
       ? assetGroup.images
-      : product && SKU_GALLERY[product.sku]?.length
-        ? SKU_GALLERY[product.sku].map((url) => ({ thumb_url: url, full_url: url }))
+      : skuGallery.length
+        ? skuGallery.map((url) => ({ thumb_url: url, full_url: url }))
         : product?.image_url
           ? [{ thumb_url: product.image_url, full_url: product.image_url }]
           : [];
