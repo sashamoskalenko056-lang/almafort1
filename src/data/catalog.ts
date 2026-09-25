@@ -403,6 +403,7 @@ const SKU_IMAGES: Record<string, string> = {
   "ZGD-EV": "/products/zgd-ev.webp",
   "ZGD-EX": "/products/zgd-ex.webp",
   "MK-LHZ": "/products/mk-lhz.webp",
+  "MK-LH": "/products/mk-lh.webp",
 };
 
 export const PRODUCTS: Product[] = raw.map(
