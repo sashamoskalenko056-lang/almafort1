@@ -4,7 +4,9 @@ import { renderErrorPage } from "./lib/error-page";
 import { maintenanceResponse, trailingSlashRedirect } from "./lib/seo-guard.server";
 import { ensureServerWebSocket } from "./lib/ws-polyfill.server";
 import { attachAuth } from "@/lib/auth-attacher";
-import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+// Supabase-интеграция шаблона не используется: у проекта собственный бэкенд
+// (src/lib/auth-attacher). Импорт убран, чтобы клиент Supabase не попадал
+// в браузерный бандл и не писал «Missing Supabase environment variable(s)».
 
 // Node < 22 без глобального WebSocket: подстраховываем библиотеки, которым он нужен —
 // подставляем полифилл до любого серверного кода (SSR и server functions).
