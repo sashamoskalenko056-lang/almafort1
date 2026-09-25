@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- ИИ-сканер определяет семейство по фото, а конкретный размер всегда подтверждает человек — масштаб без эталона ненадёжен.
+- 3D-карточки деградируют в фото и ручной повтор вместо тупикового состояния — мобильные браузеры могут временно освобождать WebGL.

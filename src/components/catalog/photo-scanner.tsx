@@ -122,6 +122,7 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
   const [preview, setPreview] = useState<string | null>(null);
 
   const [desktop, setDesktop] = useState(false);
+  const [secureCamera, setSecureCamera] = useState(true);
   /** На ПК стартуем с зоны Drag & Drop, камеру включаем только по явной просьбе. */
   const [wantCamera, setWantCamera] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -201,9 +202,10 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
 
   useEffect(() => {
     setDesktop(detectDesktop());
+    setSecureCamera(window.isSecureContext);
   }, []);
 
-  const cameraMode = !desktop || wantCamera;
+  const cameraMode = secureCamera && (!desktop || wantCamera);
 
   useEffect(() => {
     if (!open) {
@@ -402,7 +404,9 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
     }
 
     // Сжимаем на клиенте: 1024×1024 WebP вместо 4K/8 МБ — иначе на 3G ответа не дождаться.
-    const prepared = compress(decoded.source, decoded.width, decoded.height);
+    // Загруженный снимок не обрезаем квадратом: деталь может быть вытянутой или
+    // лежать не по центру. Камерный кадр уже обрезан по видимой рамке отдельно.
+    const prepared = compress(decoded.source, decoded.width, decoded.height, { square: false });
     setFrozen(prepared.dataUrl);
     // Превью загруженного файла живёт независимо от статуса анализа:
     // клиент должен видеть, что именно он отправил, даже при ошибке.
@@ -650,7 +654,7 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
             <div className="w-full max-w-[560px] rounded-2xl border-2 border-dashed border-white/35 bg-white/5 px-8 py-14">
               <Monitor className="mx-auto size-10 text-white/70" strokeWidth={1.5} />
               <h2 className="mt-4 text-xl font-bold text-white">
-                Перетащите фото детали сюда или выберите файл на компьютере
+                {secureCamera ? "Перетащите фото детали сюда или выберите файл" : "Выберите фотографию детали"}
               </h2>
               <p className="mx-auto mt-2 max-w-[46ch] text-sm leading-[1.6] text-white/70">
                 Подойдёт снимок с телефона: сожмём его прямо в браузере до 1024×1024 и отправим на
@@ -664,13 +668,18 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
                 <ImageUp className="size-4" strokeWidth={1.75} />
                 Выбрать файл на компьютере
               </button>
-              <button
+              {secureCamera && <button
                 type="button"
                 onClick={() => setWantCamera(true)}
                 className="mt-4 block w-full cursor-pointer text-xs text-white/55 underline underline-offset-4 hover:text-white"
               >
-                У меня есть веб-камера — включить съёмку
-              </button>
+                 У меня есть веб-камера — включить съёмку
+              </button>}
+              {!secureCamera && (
+                <p className="mt-4 text-xs leading-relaxed text-white/55">
+                  На этом адресе браузер разрешает выбрать готовое фото. Съёмка камерой станет доступна после подключения HTTPS.
+                </p>
+              )}
               {memory.length > 0 && (
                 <div className="mt-8 border-t border-white/15 pt-5 text-left">
                   <div className="flex items-center justify-between">

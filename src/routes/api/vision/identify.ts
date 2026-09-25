@@ -19,6 +19,9 @@ export const Route = createFileRoute("/api/vision/identify")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const { rateLimit } = await import("@/lib/rate-limit.server");
+        const limited = rateLimit(request, "vision-identify", { limit: 10, windowMs: 60_000 });
+        if (limited) return limited;
         let raw: string;
         let memory: { sku: string; features: string }[] = [];
         try {
@@ -91,6 +94,19 @@ export const Route = createFileRoute("/api/vision/identify")({
 
           if (verdict.status === "NOT_FOUND") {
             void logVisionFail(image, verdict);
+            // Для трубных заглушек форма надёжно определяет семейство, но не размер.
+            // Не называем это ошибкой распознавания: предлагаем правильный размерный ряд.
+            if (
+              category === "Заглушки внутренние" &&
+              /квадрат|прямоуг|кругл|square|rect|round|circle/i.test(verdict.shape)
+            ) {
+              return Response.json({
+                scenario: "exact",
+                verdict,
+                category,
+                variants: classVariants(verdict).map(brief),
+              });
+            }
             return Response.json({
               scenario: "notfound",
               verdict,
@@ -98,16 +114,6 @@ export const Route = createFileRoute("/api/vision/identify")({
             });
           }
 
-
-          // Смягчённый порог: класс распознан неточно — показываем аналоги, а не отказ.
-          if (verdict.status === "VALID" && score < 0.4) {
-            void logVisionFail(image, verdict);
-            return Response.json({
-              scenario: "notfound",
-              verdict,
-              matches: matchProducts(verdict, 3).map(brief),
-            });
-          }
 
           // «Посторонний объект» — только явный вердикт модели (лица, документы, чужие вещи).
           if (verdict.status === "FOREIGN") {
@@ -124,8 +130,23 @@ export const Route = createFileRoute("/api/vision/identify")({
             });
           }
 
-          if (score >= 0.85) {
+          // Валидный SKU из каталога — показываем его семейство даже при осторожной
+          // самооценке модели. Размер по фото всё равно выбирает человек.
+          if (verdict.sku && score >= 0.4) {
             // Масштаб по фото не определяется: отдаём класс и весь размерный ряд.
+            return Response.json({
+              scenario: "exact",
+              verdict,
+              category,
+              variants: classVariants(verdict).map(brief),
+            });
+          }
+
+          if (
+            score >= 0.85 &&
+            category === "Заглушки внутренние" &&
+            /квадрат|прямоуг|кругл|square|rect|round|circle/i.test(verdict.shape)
+          ) {
             return Response.json({
               scenario: "exact",
               verdict,

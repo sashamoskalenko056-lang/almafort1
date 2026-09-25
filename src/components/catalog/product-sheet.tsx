@@ -23,7 +23,7 @@ import {
 } from "@/data/palettes";
 
 import { stockLimit, useCart } from "@/store/cart-store";
-import { useEffect, useMemo, useRef, useState, type ComponentType } from "react";
+import { Component, useEffect, useMemo, useRef, useState, type ComponentType, type ErrorInfo, type ReactNode } from "react";
 import { ClientOnly } from "@tanstack/react-router";
 import { ProductThumb } from "@/components/catalog/product-thumb";
 import { createClientOnlyFn } from "@tanstack/react-start";
@@ -66,6 +66,7 @@ type CadViewerProps = {
   material?: PartMaterial;
   zoom?: { min: number; max: number };
   modelRotation?: readonly [number, number, number];
+  onShowPhoto?: () => void;
 };
 
 
@@ -468,6 +469,7 @@ export function ProductSheet({
   const [CadViewer, setCadViewer] = useState<ComponentType<CadViewerProps> | null>(null);
   /** Если 3D-модуль не загрузился за 20 секунд — показываем статичное 2D-изображение. */
   const [cad3dFailed, setCad3dFailed] = useState(false);
+  useEffect(() => setCad3dFailed(false), [product?.sku]);
 
   useEffect(() => {
     let active = true;
@@ -727,7 +729,8 @@ export function ProductSheet({
                     }`}
                   >
                     <ClientOnly fallback={<CadViewerPlaceholder />}>
-                      {CadViewer ? (
+                      {CadViewer && !cad3dFailed ? (
+                        <CadErrorBoundary key={product.sku} onError={() => setCad3dFailed(true)}>
                         <CadViewer
                           key={isKrepss ? KREPSS_VARIANTS[krepssVariant]!.id : product.sku}
                           glbUrl={
@@ -744,9 +747,19 @@ export function ProductSheet({
                             ? { modelRotation: [KREPSS_VARIANTS[krepssVariant]!.rotationX, 0, 0] as const }
                             : {})}
                           {...(PLUG_MM[product.sku] ? { zoom: PLUG_MM[product.sku] } : {})}
+                          {...(galleryImages.length ? { onShowPhoto: () => setMediaView(0) } : {})}
                         />
+                        </CadErrorBoundary>
                       ) : cad3dFailed ? (
-                        <CadStaticFallback product={product} />
+                        <CadStaticFallback
+                          product={product}
+                          onRetry={() => {
+                            setCad3dFailed(false);
+                            setCadViewer(null);
+                            void loadCadViewer().then((Viewer) => setCadViewer(() => Viewer)).catch(() => setCad3dFailed(true));
+                          }}
+                          {...(galleryImages.length ? { onShowPhoto: () => setMediaView(0) } : {})}
+                        />
                       ) : (
                         <CadViewerPlaceholder />
                       )}
@@ -1076,14 +1089,34 @@ export function ProductSheet({
 }
 
 /** Статичное 2D-изображение детали: страховка на случай, когда WebGL не поднялся. */
-function CadStaticFallback({ product }: { product: Product }) {
+class CadErrorBoundary extends Component<
+  { children: ReactNode; onError: () => void },
+  { failed: boolean }
+> {
+  override state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  override componentDidCatch(_error: Error, _info: ErrorInfo) {
+    this.props.onError();
+  }
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+function CadStaticFallback({ product, onRetry, onShowPhoto }: { product: Product; onRetry: () => void; onShowPhoto?: () => void }) {
   return (
     <div className="grid h-64 place-items-center overflow-hidden rounded-lg border border-border bg-surface p-6 sm:h-72 lg:h-[380px]">
       <div className="w-40 max-w-full">
         <ProductThumb src={product.image_url} alt={product.name} />
         <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-          3D-модель загружается дольше обычного — проверьте интернет или откройте «Фото»
+          Не удалось запустить 3D. Карточка и фото доступны.
         </p>
+        <div className="mt-3 flex flex-col gap-2">
+          <button type="button" onClick={onRetry} className="min-h-[44px] rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground">Повторить 3D</button>
+          {onShowPhoto && <button type="button" onClick={onShowPhoto} className="min-h-[44px] rounded-lg border border-border px-3 text-xs font-semibold text-foreground">Открыть фото</button>}
+        </div>
       </div>
     </div>
   );

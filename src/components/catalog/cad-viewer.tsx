@@ -10,13 +10,26 @@ import {
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import * as THREE from "three";
 import type { Mesh, Group, Texture } from "three";
-import { Box, Grid3x3 } from "lucide-react";
+import { Box, Grid3x3, RefreshCw } from "lucide-react";
 
 /** WASM-декодеры Draco лежат в public/draco/ — без них сжатая сетка не распакуется. */
+const sharedDraco = new DRACOLoader();
+sharedDraco.setDecoderPath("/draco/");
 function attachDraco(loader: { setDRACOLoader: (l: DRACOLoader) => void }) {
-  const draco = new DRACOLoader();
-  draco.setDecoderPath("/draco/");
-  loader.setDRACOLoader(draco);
+  loader.setDRACOLoader(sharedDraco);
+}
+
+function supportsWebGL(): boolean {
+  try {
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+    if (!context) return false;
+    const extension = context.getExtension("WEBGL_lose_context");
+    extension?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 const PLASTIC = { roughness: 0.52, metalness: 0 } as const;
@@ -169,8 +182,9 @@ function GltfModel({
         const m = o as Mesh;
         if (m.isMesh && m.material && !Array.isArray(m.material)) (m.material as THREE.Material).dispose();
       });
+      useGLTF.clear(url);
     },
-    [cloned],
+    [cloned, url],
   );
   return <primitive object={cloned} />;
 }
@@ -385,6 +399,7 @@ export function CadViewer({
   material = PLASTIC,
   zoom,
   modelRotation = [Math.PI / 2, 0, 0],
+  onShowPhoto,
 }: {
   glbUrl: string | null;
   category: string;
@@ -394,24 +409,38 @@ export function CadViewer({
   zoom?: { min: number; max: number };
   /** Коррекция локальных CAD-осей в систему Three.js (Y-up). */
   modelRotation?: readonly [number, number, number];
+  onShowPhoto?: () => void;
 }) {
   const [wire, setWire] = useState(false);
   const [auto, setAuto] = useState(true);
   const [grabbing, setGrabbing] = useState(false);
   const [lost, setLost] = useState(false);
+  const [supported, setSupported] = useState<boolean | null>(null);
   // Мобильные браузеры отбирают WebGL-контекст (сворачивание, нехватка памяти) —
   // пересоздаём Canvas автоматически, до 3 попыток.
   const [canvasKey, setCanvasKey] = useState(0);
+  useEffect(() => setSupported(supportsWebGL()), []);
   useEffect(() => {
     if (!lost || canvasKey >= 3) return;
-    const t = setTimeout(() => {
-      setLost(false);
-      setCanvasKey((k) => k + 1);
-    }, 600);
-    return () => clearTimeout(t);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const recover = () => {
+      if (document.visibilityState !== "visible") return;
+      timer = setTimeout(() => {
+        setLost(false);
+        setCanvasKey((k) => k + 1);
+      }, [600, 1500, 3000][canvasKey] ?? 3000);
+    };
+    recover();
+    document.addEventListener("visibilitychange", recover);
+    return () => {
+      document.removeEventListener("visibilitychange", recover);
+      if (timer) clearTimeout(timer);
+    };
   }, [lost, canvasKey]);
-  // На смартфонах режем нагрузку: без сглаживания и теней, dpr не выше 1.5.
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+  // На смартфонах и устройствах с грубым указателем режем нагрузку на GPU.
+  const isMobile =
+    typeof window !== "undefined" &&
+    (window.innerWidth < 768 || window.matchMedia("(any-pointer: coarse)").matches);
   const glRef = useRef<{
     dispose: () => void;
     forceContextLoss?: () => void;
@@ -443,6 +472,27 @@ export function CadViewer({
   );
 
 
+  const retry3d = () => {
+    setLost(false);
+    setCanvasKey((key) => key + 1);
+  };
+
+  if (supported === false) {
+    return (
+      <div className="grid h-64 place-items-center rounded-lg bg-surface p-6 text-center sm:h-72 lg:h-[380px]">
+        <div>
+          <p className="text-sm font-semibold text-foreground">Браузер не поддерживает WebGL</p>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Откройте фотографию товара или обновите браузер.</p>
+          {onShowPhoto && (
+            <button type="button" onClick={onShowPhoto} className="mt-4 min-h-[44px] rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground">
+              Открыть фото
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`relative h-64 overflow-hidden rounded-lg ${
@@ -455,12 +505,12 @@ export function CadViewer({
       onPointerUp={() => setGrabbing(false)}
       onPointerLeave={() => setGrabbing(false)}
     >
-      <Canvas
+      {supported && <Canvas
         key={canvasKey}
         camera={{ position: [2.6, 1.8, 2.6], fov: 40 }}
         dpr={isMobile ? [1, 1.5] : [1, 2]}
         shadows={!isMobile}
-        gl={{ antialias: true, powerPreference: "default" }}
+        gl={{ antialias: !isMobile, powerPreference: isMobile ? "low-power" : "default" }}
         onCreated={({ gl, scene }) => {
           glRef.current = gl as unknown as typeof glRef.current;
           const canvas = (gl as unknown as { domElement: HTMLCanvasElement }).domElement;
@@ -504,14 +554,16 @@ export function CadViewer({
           <directionalLight position={[-5, 1, 1]} intensity={0.9} color="#f4f6f8" />
           <directionalLight position={[5, 1, -1]} intensity={0.9} color="#eef1f4" />
           {/* Мягкое контактное затенение вместо чёрной проекционной тени */}
-          <ContactShadows
-            position={[0, -1.15, 0]}
-            opacity={0.32}
-            scale={9}
-            blur={2.8}
-            far={4}
-            resolution={512}
-          />
+          {!isMobile && (
+            <ContactShadows
+              position={[0, -1.15, 0]}
+              opacity={0.32}
+              scale={9}
+              blur={2.8}
+              far={4}
+              resolution={512}
+            />
+          )}
         </Suspense>
         <OrbitControls
           enablePan={false}
@@ -522,11 +574,24 @@ export function CadViewer({
           // Один палец — вращение, два пальца — pinch-to-zoom
           touches={{ ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN }}
         />
-      </Canvas>
+      </Canvas>}
 
       {lost && canvasKey >= 3 && (
-        <div className="absolute inset-0 grid place-items-center bg-surface p-6 text-center font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
-          3D-просмотр недоступен на этом устройстве
+        <div className="absolute inset-0 z-20 grid place-items-center bg-surface p-6 text-center">
+          <div>
+            <p className="text-sm font-semibold text-foreground">3D-просмотр временно остановлен</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Браузер освободил графическую память. Можно запустить просмотр снова.</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <button type="button" onClick={retry3d} className="inline-flex min-h-[44px] items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground">
+                <RefreshCw className="size-4" /> Повторить 3D
+              </button>
+              {onShowPhoto && (
+                <button type="button" onClick={onShowPhoto} className="min-h-[44px] rounded-lg border border-border px-4 text-sm font-semibold text-foreground">
+                  Открыть фото
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
