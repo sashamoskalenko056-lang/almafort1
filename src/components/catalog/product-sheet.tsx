@@ -31,6 +31,7 @@ import { Download, FileText, Layers, Ruler, Truck } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { Product } from "@/data/catalog";
+import { SKU_GALLERY } from "@/data/catalog";
 import { formatPrice, lineTotal } from "@/lib/pricing";
 import { trackCadDownload, trackViewItem } from "@/lib/metrika";
 import { CityInput, type CityValue } from "@/components/cart/city-input";
@@ -407,13 +408,16 @@ export function ProductSheet({
   const [calcState, setCalcState] = useState<"idle" | "loading" | "ready" | "failed">("idle");
   const assets = useAssetGroups();
   const assetGroup = product ? assets.get(product.sku) : undefined;
-  // Галерея: фото из пакета контента, иначе одиночное image_url товара.
-  const galleryImages =
+  // Галерея: фото из пакета контента, иначе галерея артикула, иначе одиночное image_url.
+  const skuGallery = product ? (SKU_GALLERY[product.sku] ?? []) : [];
+  const galleryImages: { thumb_url: string; full_url: string; caption?: string }[] =
     assetGroup?.images.length
       ? assetGroup.images
-      : product?.image_url
-        ? [{ thumb_url: product.image_url, full_url: product.image_url }]
-        : [];
+      : skuGallery.length
+        ? skuGallery.map((url) => ({ thumb_url: url, full_url: url }))
+        : product?.image_url
+          ? [{ thumb_url: product.image_url, full_url: product.image_url }]
+          : [];
   const [mediaView, setMediaView] = useState<"3d" | number>("3d");
   useEffect(() => setMediaView("3d"), [product?.sku]);
   const service = product ? SERVICE_PROFILES[product.sku] : undefined;

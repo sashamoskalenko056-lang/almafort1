@@ -415,6 +415,18 @@ const SKU_IMAGES: Record<string, string> = {
   "KAN-CAP-R": "/products/kan-cap-r.webp",
   "TG-100": "/products/tg.webp",
   "TG-150": "/products/tg.webp",
+  "OP-H15": "/products/op-h-cover.webp",
+  "OP-H20": "/products/op-h-cover.webp",
+  "OP-H35": "/products/op-h-cover.webp",
+  "OP-H50": "/products/op-h-cover.webp",
+};
+
+/** Галерея фото артикула: первое — обложка (совпадает с SKU_IMAGES). */
+export const SKU_GALLERY: Record<string, string[]> = {
+  "OP-H15": ["/products/op-h-cover.webp", "/products/op-h-side.webp", "/products/op-h-bottom.webp", "/products/op-h-top.webp"],
+  "OP-H20": ["/products/op-h-cover.webp", "/products/op-h-side.webp", "/products/op-h-bottom.webp", "/products/op-h-top.webp"],
+  "OP-H35": ["/products/op-h-cover.webp", "/products/op-h-side.webp", "/products/op-h-bottom.webp", "/products/op-h-top.webp"],
+  "OP-H50": ["/products/op-h-cover.webp", "/products/op-h-side.webp", "/products/op-h-bottom.webp", "/products/op-h-top.webp"],
 };
 
 export const PRODUCTS: Product[] = raw.map(
