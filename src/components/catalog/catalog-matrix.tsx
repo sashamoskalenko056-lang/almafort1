@@ -247,7 +247,7 @@ function MobileCard({
                 width={64}
                 height={64}
                 loading="lazy"
-                className="size-full object-contain transition-transform duration-300 hover:scale-110"
+                className="block size-full object-contain object-center transition-transform duration-300 hover:scale-110"
               />
             ) : (
               <ProductThumb src={p.image_url} alt={p.name} />
@@ -267,7 +267,7 @@ function MobileCard({
                 width={64}
                 height={64}
                 loading="lazy"
-                className="size-full object-contain transition-transform duration-300 hover:scale-110"
+                className="block size-full object-contain object-center transition-transform duration-300 hover:scale-110"
               />
             ) : (
               <ProductThumb src={p.image_url} alt={p.name} />
@@ -481,7 +481,7 @@ function Row({
               width={40}
               height={40}
               loading="lazy"
-              className="size-10 object-contain"
+              className="block size-10 object-contain object-center"
             />
           </button>
         ) : (
