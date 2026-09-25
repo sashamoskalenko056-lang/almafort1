@@ -150,7 +150,7 @@ function CatalogPage() {
             <a
               key={c.slug}
               href={`/catalog/${c.slug}`}
-              className="rounded-sm border border-border bg-card px-3 py-1.5 text-xs font-semibold text-foreground transition-colors duration-200 hover:border-primary hover:text-primary"
+              className="inline-flex min-h-10 items-center rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-all duration-200 hover:border-primary hover:text-primary hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
             >
               {c.label}
             </a>
@@ -168,7 +168,7 @@ function CatalogPage() {
           <button
             type="button"
             onClick={() => setUpload((v) => !v)}
-            className="flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-2 rounded-sm border border-[#D1D5DB] bg-[#F3F4F6] px-4 py-2.5 sm:w-auto text-sm font-semibold text-foreground transition-colors duration-200 hover:border-primary hover:text-primary"
+            className="flex min-h-[48px] w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 sm:w-auto text-sm font-semibold text-foreground shadow-sm transition-all duration-200 hover:border-primary hover:text-primary hover:shadow-md"
           >
             <FileSpreadsheet className="size-4" strokeWidth={1.75} />
             Загрузить спецификацию Excel

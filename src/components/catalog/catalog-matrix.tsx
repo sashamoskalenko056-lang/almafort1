@@ -362,14 +362,12 @@ function MobileCard({
         type="button"
         onClick={() => void add()}
         disabled={state === "loading" || outOfStock}
-        className={`mt-3 flex min-h-[48px] w-full flex-nowrap items-center justify-center gap-x-1 whitespace-nowrap rounded-xl text-xs sm:text-sm font-semibold tabular-nums transition-colors active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed ${
+        className={`mt-3 flex min-h-[48px] w-full flex-nowrap items-center justify-center gap-x-1 whitespace-nowrap rounded-lg text-xs sm:text-sm font-semibold tabular-nums shadow-sm transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed disabled:shadow-none ${
           outOfStock
-            ? "border border-[#E5E7EB] bg-[#F3F4F6] text-[#9CA3AF]"
+            ? "border border-border bg-muted text-muted-foreground"
             : state === "done"
               ? "bg-[#10B981] text-white"
-              : hasSum
-                ? "bg-[#F3F4F6] text-foreground hover:bg-primary hover:text-primary-foreground"
-                : "border border-[#D1D5DB] bg-[#F3F4F6] text-muted-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
         }`}
       >
         {state === "loading" ? (
@@ -543,7 +541,7 @@ function Row({
           placeholder={onRequest ? "—" : outOfStock ? "—" : "0"}
           disabled={onRequest || outOfStock}
           aria-label={`Количество ${p.sku}`}
-          className="w-full min-w-0 rounded-sm border border-[#D1D5DB] disabled:cursor-not-allowed disabled:bg-[#F3F4F6] disabled:text-gray-300 bg-card px-2 py-1.5 text-right text-sm tabular-nums text-foreground outline-none transition-colors duration-150 focus:border-foreground"
+          className="h-10 w-full min-w-0 rounded-lg border border-border bg-muted/40 px-3 text-center text-sm font-medium tabular-nums text-foreground outline-none transition-all duration-150 focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
         />
       </div>
       <div className={`${CELL} flex-col items-stretch justify-center gap-1`}>
@@ -552,14 +550,12 @@ function Row({
           onClick={() => void add()}
           disabled={state === "loading" || outOfStock}
           aria-label={onRequest ? "Запросить индивидуальный расчет" : "Добавить в корзину"}
-          className={`group flex w-full min-w-0 cursor-pointer items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-sm px-3 py-2 text-xs font-semibold tabular-nums transition-all duration-200 disabled:cursor-not-allowed ${
+          className={`group flex h-10 w-full min-w-0 cursor-pointer items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-lg px-3 text-xs font-semibold tabular-nums shadow-sm transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:shadow-none ${
             outOfStock
-              ? "border border-[#E5E7EB] bg-[#F3F4F6] text-[#9CA3AF]"
+              ? "border border-border bg-muted text-muted-foreground"
               : state === "done"
               ? "bg-[#10B981] text-white"
-              : hasSum
-                ? "bg-[#F3F4F6] text-foreground hover:bg-primary hover:text-primary-foreground"
-                : "border border-[#D1D5DB] bg-[#F3F4F6] text-muted-foreground hover:border-primary hover:bg-primary hover:text-primary-foreground"
+              : "bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-md"
           }`}
         >
 
