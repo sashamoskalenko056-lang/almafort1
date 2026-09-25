@@ -620,9 +620,9 @@ export function ProductSheet({
               <button
                 type="button"
                 onClick={() => setQuoteOpen(true)}
-                className="mt-2 inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-sm bg-primary px-6 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                className="mt-2 inline-flex min-h-[48px] w-full cursor-pointer items-center justify-center rounded-lg bg-primary shadow-sm active:scale-[0.98] px-6 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
               >
-                Расчёт
+                Рассчитать стоимость
               </button>
             </div>
 
@@ -667,7 +667,7 @@ export function ProductSheet({
                           role="radio"
                           aria-checked={i === krepssVariant}
                           onClick={() => setKrepssVariant(i)}
-                          className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-colors ${
+                          className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
                             i === krepssVariant
                               ? "border-primary bg-primary text-primary-foreground"
                               : "border-border text-foreground hover:border-primary"
@@ -912,7 +912,7 @@ export function ProductSheet({
                       href={href}
                       download={name}
                       onClick={() => trackCadDownload(product.sku, fmt)}
-                      className="flex items-center gap-3 rounded-sm border border-border px-4 py-3 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                      className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 hover:bg-muted/40 hover:shadow-sm transition-all text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
                     >
                       <Icon className="size-4 shrink-0" strokeWidth={1.75} />
                       <span className="min-w-0 flex-1 truncate">{label}</span>
@@ -942,7 +942,7 @@ export function ProductSheet({
                         inputMode="numeric"
                         pattern="[0-9]*"
                         aria-label="Количество, шт"
-                        className="mt-3 h-11 w-[104px] shrink-0 rounded-sm border border-[#D1D5DB] px-3 text-base outline-none focus:border-foreground disabled:cursor-not-allowed disabled:bg-[#F3F4F6] disabled:text-gray-300"
+                        className="mt-3 h-11 w-[104px] shrink-0 rounded-lg border border-border px-3 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-[#F3F4F6] disabled:text-gray-300"
                       />
 
                     </div>
@@ -1015,7 +1015,7 @@ export function ProductSheet({
                         }`,
                       );
                     }}
-                    className={`flex min-h-[48px] w-full cursor-pointer flex-nowrap items-center justify-center gap-x-1 whitespace-nowrap rounded-xl px-4 py-2 text-xs md:text-sm font-semibold transition-colors duration-200 md:mt-6 md:rounded-sm md:px-6 disabled:cursor-not-allowed ${
+                    className={`flex min-h-[48px] w-full cursor-pointer flex-nowrap items-center justify-center gap-x-1 whitespace-nowrap rounded-xl px-4 py-2 text-xs md:text-sm font-semibold transition-colors duration-200 md:mt-6 md:rounded-lg shadow-sm active:scale-[0.98] md:px-6 disabled:cursor-not-allowed ${
                       outOfStock
                         ? "bg-[#E5E7EB] text-[#9CA3AF]"
                         : "bg-primary text-primary-foreground hover:opacity-90"
