@@ -525,7 +525,7 @@ export function CadViewer({
         aria-pressed={wire}
         className={`absolute bottom-3 left-3 flex items-center gap-2 rounded-sm border px-3 py-1.5 text-xs font-medium backdrop-blur transition-colors ${
           wire
-            ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+            ? "border-2 border-primary bg-transparent text-primary hover:bg-primary/10"
             : "border-border bg-card/90 text-foreground hover:border-primary hover:text-primary"
         }`}
       >
