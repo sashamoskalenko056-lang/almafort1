@@ -1218,11 +1218,12 @@ export function PhotoScanner({ open, onClose }: { open: boolean; onClose: () => 
           {result.scenario === "notfound" && (
             <div className="rounded-md border border-zinc-300 bg-zinc-50 p-5">
               <h3 className="text-base font-bold leading-[1.35] text-zinc-800">
-                Деталь не распознана
+                {result.matches.length > 0 ? "Похоже на эти комплектующие" : "Деталь не распознана"}
               </h3>
               <p className="mt-2 text-sm leading-[1.6] text-zinc-600">
-                Сфотографируйте деталь на контрастном фоне при хорошем освещении, либо выберите
-                товар вручную из каталога.
+                {result.matches.length > 0
+                  ? "Точно определить не получилось — выберите подходящее из списка или переснимите деталь крупнее."
+                  : "Сфотографируйте деталь на контрастном фоне при хорошем освещении, либо выберите товар вручную из каталога."}
               </p>
               {result.matches.length > 0 && (
                 <>
